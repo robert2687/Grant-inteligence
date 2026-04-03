@@ -1,3 +1,15 @@
+export interface Project {
+  id: string;
+  name: string;
+  summary: string;
+  objectives: string;
+  targetImpact: string;
+  technologyArea: string;
+  teamMembers: string;
+  trlLevel: string;
+  additionalNotes: string;
+}
+
 export interface UserProfile {
   firstName: string;
   lastName: string;

@@ -4,18 +4,19 @@ import { generateAdminPlan } from '../services/agentService';
 import { ShieldCheck, Loader2, Calendar, FileText, CheckCircle2, Circle } from 'lucide-react';
 
 export default function AdminCompliance() {
-  const { grants, adminPlans, addAdminPlan } = useAppContext();
+  const { grants, adminPlans, addAdminPlan, projects, activeProjectId } = useAppContext();
   const [selectedGrantId, setSelectedGrantId] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
 
   const selectedGrant = grants.find(g => g.id === selectedGrantId);
   const adminPlan = selectedGrantId ? adminPlans[selectedGrantId] : null;
+  const activeProject = projects.find(p => p.id === activeProjectId) || null;
 
   const handleGenerate = async () => {
     if (!selectedGrant) return;
     setIsGenerating(true);
     try {
-      const plan = await generateAdminPlan(selectedGrant);
+      const plan = await generateAdminPlan(selectedGrant, activeProject);
       addAdminPlan(plan);
     } catch (err) {
       console.error(err);

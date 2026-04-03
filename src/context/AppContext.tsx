@@ -1,13 +1,18 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Grant, Evaluation, AdminData, UserProfile } from '../types';
+import { Grant, Evaluation, AdminData, UserProfile, Project } from '../types';
 
 interface AppState {
   userProfile: UserProfile | null;
+  projects: Project[];
+  activeProjectId: string | null;
   grants: Grant[];
   evaluations: Record<string, Evaluation>;
   proposals: Record<string, string>;
   adminPlans: Record<string, AdminData>;
   updateUserProfile: (profile: UserProfile) => void;
+  addProject: (project: Project) => void;
+  updateProject: (project: Project) => void;
+  setActiveProjectId: (id: string | null) => void;
   addGrants: (newGrants: Grant[]) => void;
   updateGrantStatus: (id: string, status: Grant['status']) => void;
   addEvaluation: (evalData: Evaluation) => void;
@@ -19,6 +24,8 @@ const AppContext = createContext<AppState | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [evaluations, setEvaluations] = useState<Record<string, Evaluation>>({});
   const [proposals, setProposals] = useState<Record<string, string>>({});
@@ -26,6 +33,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUserProfile = (profile: UserProfile) => {
     setUserProfile(profile);
+  };
+
+  const addProject = (project: Project) => {
+    setProjects(prev => [...prev, project]);
+    if (!activeProjectId) setActiveProjectId(project.id);
+  };
+
+  const updateProject = (project: Project) => {
+    setProjects(prev => prev.map(p => p.id === project.id ? project : p));
   };
 
   const addGrants = (newGrants: Grant[]) => {
@@ -55,7 +71,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AppContext.Provider value={{ userProfile, grants, evaluations, proposals, adminPlans, updateUserProfile, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan }}>
+    <AppContext.Provider value={{ 
+      userProfile, projects, activeProjectId, grants, evaluations, proposals, adminPlans, 
+      updateUserProfile, addProject, updateProject, setActiveProjectId, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan 
+    }}>
       {children}
     </AppContext.Provider>
   );
