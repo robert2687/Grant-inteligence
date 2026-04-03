@@ -176,7 +176,7 @@ export const generateAdminPlan = async (grant: Grant, project: Project | null): 
               properties: {
                 name: { type: Type.STRING },
                 deadline: { type: Type.STRING },
-                status: { type: Type.STRING, enum: ["pending", "completed"] }
+                status: { type: Type.STRING, enum: ["completed", "in progress", "missing", "overdue"] }
               },
               required: ["name", "deadline", "status"]
             }
@@ -187,13 +187,35 @@ export const generateAdminPlan = async (grant: Grant, project: Project | null): 
               type: Type.OBJECT,
               properties: {
                 name: { type: Type.STRING },
-                status: { type: Type.STRING, enum: ["missing", "drafted", "finalized"] }
+                status: { type: Type.STRING, enum: ["completed", "in progress", "missing", "overdue"] }
               },
               required: ["name", "status"]
             }
+          },
+          submissionReadiness: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                indicator: { type: Type.STRING },
+                status: { type: Type.STRING, enum: ["completed", "in progress", "missing", "overdue"] }
+              },
+              required: ["indicator", "status"]
+            }
+          },
+          complianceWarnings: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                warning: { type: Type.STRING },
+                status: { type: Type.STRING, enum: ["completed", "in progress", "missing", "overdue"] }
+              },
+              required: ["warning", "status"]
+            }
           }
         },
-        required: ["tasks", "documents"]
+        required: ["tasks", "documents", "submissionReadiness", "complianceWarnings"]
       }
     }
   });

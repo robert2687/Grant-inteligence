@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { scanForGrants } from '../services/agentService';
-import { Search, Loader2, ExternalLink } from 'lucide-react';
+import { Search, Loader2, ExternalLink, Filter } from 'lucide-react';
 
 export default function GrantScanner() {
   const { grants, addGrants, userProfile, projects, activeProjectId } = useAppContext();
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [regionFilter, setRegionFilter] = useState('');
+  const [amountFilter, setAmountFilter] = useState('');
+  const [deadlineFilter, setDeadlineFilter] = useState('');
+  const [minFitScore, setMinFitScore] = useState<number | ''>('');
 
   const activeProject = projects.find(p => p.id === activeProjectId) || null;
 
@@ -22,6 +27,14 @@ export default function GrantScanner() {
       setIsScanning(false);
     }
   };
+
+  const filteredGrants = grants.filter(grant => {
+    if (regionFilter && !grant.region.toLowerCase().includes(regionFilter.toLowerCase())) return false;
+    if (amountFilter && !grant.amount.toLowerCase().includes(amountFilter.toLowerCase())) return false;
+    if (deadlineFilter && grant.deadline > deadlineFilter) return false;
+    if (minFitScore !== '' && grant.fitScore < minFitScore) return false;
+    return true;
+  });
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -46,6 +59,56 @@ export default function GrantScanner() {
         </div>
       )}
 
+      {grants.length > 0 && (
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap gap-4 items-end">
+          <div className="flex items-center space-x-2 w-full mb-2">
+            <Filter className="w-5 h-5 text-gray-500" />
+            <h3 className="font-medium text-gray-700">Filter Grants</h3>
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Region</label>
+            <input
+              type="text"
+              placeholder="e.g. Europe, Global"
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Amount</label>
+            <input
+              type="text"
+              placeholder="e.g. €50,000"
+              value={amountFilter}
+              onChange={(e) => setAmountFilter(e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Deadline Before</label>
+            <input
+              type="date"
+              value={deadlineFilter}
+              onChange={(e) => setDeadlineFilter(e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Min Fit Score (%)</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              placeholder="e.g. 80"
+              value={minFitScore}
+              onChange={(e) => setMinFitScore(e.target.value ? Number(e.target.value) : '')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6">
         {grants.length === 0 && !isScanning && (
           <div className="text-center py-20 bg-white rounded-xl border border-gray-200 border-dashed">
@@ -55,7 +118,7 @@ export default function GrantScanner() {
           </div>
         )}
 
-        {grants.map(grant => (
+        {filteredGrants.map(grant => (
           <div key={grant.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
               <div>
@@ -94,6 +157,12 @@ export default function GrantScanner() {
             </div>
           </div>
         ))}
+        
+        {grants.length > 0 && filteredGrants.length === 0 && (
+          <div className="text-center py-10 bg-white rounded-xl border border-gray-200 border-dashed">
+            <p className="text-gray-500">No grants match your filters.</p>
+          </div>
+        )}
       </div>
     </div>
   );

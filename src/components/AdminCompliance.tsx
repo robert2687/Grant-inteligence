@@ -1,7 +1,35 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { generateAdminPlan } from '../services/agentService';
-import { ShieldCheck, Loader2, Calendar, FileText, CheckCircle2, Circle } from 'lucide-react';
+import { ShieldCheck, Loader2, Calendar, FileText, CheckCircle2, Circle, AlertTriangle, CheckSquare } from 'lucide-react';
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'completed':
+      return 'bg-emerald-100 text-emerald-800';
+    case 'in progress':
+      return 'bg-amber-100 text-amber-800';
+    case 'missing':
+    case 'overdue':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const getStatusIconColor = (status: string) => {
+  switch (status) {
+    case 'completed':
+      return 'text-emerald-500';
+    case 'in progress':
+      return 'text-amber-500';
+    case 'missing':
+    case 'overdue':
+      return 'text-red-500';
+    default:
+      return 'text-gray-300';
+  }
+};
 
 export default function AdminCompliance() {
   const { grants, adminPlans, addAdminPlan, projects, activeProjectId } = useAppContext();
@@ -69,16 +97,19 @@ export default function AdminCompliance() {
                 {adminPlan.tasks.map((task, i) => (
                   <li key={i} className="p-4 flex items-start space-x-3 hover:bg-gray-50">
                     {task.status === 'completed' ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                      <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${getStatusIconColor(task.status)}`} />
                     ) : (
-                      <Circle className="w-5 h-5 text-gray-300 shrink-0 mt-0.5" />
+                      <Circle className={`w-5 h-5 shrink-0 mt-0.5 ${getStatusIconColor(task.status)}`} />
                     )}
-                    <div>
+                    <div className="flex-1">
                       <p className={`text-sm font-medium ${task.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                         {task.name}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">Deadline: {task.deadline}</p>
                     </div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(task.status)}`}>
+                      {task.status}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -95,11 +126,7 @@ export default function AdminCompliance() {
                 {adminPlan.documents.map((doc, i) => (
                   <li key={i} className="p-4 flex items-center justify-between hover:bg-gray-50">
                     <span className="text-sm font-medium text-gray-900">{doc.name}</span>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                      doc.status === 'finalized' ? 'bg-emerald-100 text-emerald-800' :
-                      doc.status === 'drafted' ? 'bg-amber-100 text-amber-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(doc.status)}`}>
                       {doc.status}
                     </span>
                   </li>
@@ -107,6 +134,48 @@ export default function AdminCompliance() {
               </ul>
             </div>
           </div>
+
+          {adminPlan.submissionReadiness && adminPlan.submissionReadiness.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center space-x-2">
+                <CheckSquare className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-semibold text-gray-900">Submission Readiness</h3>
+              </div>
+              <div className="p-0">
+                <ul className="divide-y divide-gray-100">
+                  {adminPlan.submissionReadiness.map((indicator, i) => (
+                    <li key={i} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                      <span className="text-sm font-medium text-gray-900">{indicator.indicator}</span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(indicator.status)}`}>
+                        {indicator.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {adminPlan.complianceWarnings && adminPlan.complianceWarnings.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-semibold text-gray-900">Compliance Warnings</h3>
+              </div>
+              <div className="p-0">
+                <ul className="divide-y divide-gray-100">
+                  {adminPlan.complianceWarnings.map((warning, i) => (
+                    <li key={i} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                      <span className="text-sm font-medium text-gray-900">{warning.warning}</span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(warning.status)}`}>
+                        {warning.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

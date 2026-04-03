@@ -66,6 +66,8 @@ export interface Evaluation {
 
 export interface AdminData {
   grantId: string;
-  tasks: { name: string; deadline: string; status: 'pending' | 'completed' }[];
-  documents: { name: string; status: 'missing' | 'drafted' | 'finalized' }[];
+  tasks: { name: string; deadline: string; status: 'completed' | 'in progress' | 'missing' | 'overdue' }[];
+  documents: { name: string; status: 'completed' | 'in progress' | 'missing' | 'overdue' }[];
+  submissionReadiness: { indicator: string; status: 'completed' | 'in progress' | 'missing' | 'overdue' }[];
+  complianceWarnings: { warning: string; status: 'completed' | 'in progress' | 'missing' | 'overdue' }[];
 }
