@@ -64,6 +64,17 @@ export interface Evaluation {
   decision: 'Go' | 'No-Go';
 }
 
+export interface EUAdminData {
+  program: 'Horizon Europe' | 'EIC Accelerator' | 'Digital Europe' | 'Erasmus+' | 'Interreg' | 'CEF' | 'Other';
+  picValidation: { status: 'valid' | 'invalid' | 'missing' | 'pending'; pic?: string; message: string };
+  consortium: { partnerName: string; pic: string; role: 'Coordinator' | 'Partner' | 'Affiliated Entity'; country: string; status: 'confirmed' | 'pending' | 'missing' }[];
+  workPackages: { wpNumber: number; title: string; leader: string; status: 'draft' | 'final' | 'missing' }[];
+  ethicsAndData: { requirement: string; status: 'compliant' | 'action needed' | 'missing' }[];
+  budget: { category: 'Personnel' | 'Subcontracting' | 'Travel' | 'Other Direct Costs' | 'Indirect Costs'; amount: number; status: 'aligned' | 'over limit' | 'under limit' | 'missing' }[];
+  trlAlignment: { expectedTRL: string; currentTRL: string; status: 'aligned' | 'misaligned' | 'unknown' };
+  euReadinessScore: number;
+}
+
 export interface AdminData {
   grantId: string;
   tasks: { name: string; deadline: string; status: 'completed' | 'in progress' | 'missing' | 'overdue' }[];
@@ -77,4 +88,5 @@ export interface AdminData {
     affectedItems: string[];
     nextSteps: string;
   }[];
+  euData?: EUAdminData;
 }

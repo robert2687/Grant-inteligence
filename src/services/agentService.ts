@@ -160,10 +160,14 @@ export const createProposalChat = (grant: Grant | null, evaluation: Evaluation |
   });
 };
 
-export const generateAdminPlan = async (grant: Grant, project: Project | null): Promise<AdminData> => {
+export const generateAdminPlan = async (grant: Grant, project: Project | null, isEUMode: boolean = false): Promise<AdminData> => {
   let contents = `Create an administrative checklist and timeline for this grant:\n\n${JSON.stringify(grant, null, 2)}`;
   if (project) {
     contents += `\n\nUser's Project Context:\n${JSON.stringify(project, null, 2)}\n\nTailor the administrative plan to this project.`;
+  }
+
+  if (isEUMode) {
+    contents += `\n\nEU GRANTS MODE ENABLED: This is an EU grant (e.g., Horizon Europe, EIC Accelerator, Digital Europe, Erasmus+, Interreg, CEF). You MUST include the 'euData' object in your JSON response with EU-specific features: PIC validation, consortium partner tracking, Work Package structure, Ethics & Data Management requirements, EU budget categories (Personnel, Subcontracting, Travel, Other Direct Costs, Indirect Costs), TRL alignment checks, and an EU-style submission readiness score (0-100). Make sure to analyze the grant details and project to populate this data.`;
   }
 
   const response = await ai.models.generateContent({
@@ -233,6 +237,82 @@ export const generateAdminPlan = async (grant: Grant, project: Project | null): 
               },
               required: ["type", "message", "severity", "affectedItems", "nextSteps"]
             }
+          },
+          euData: {
+            type: Type.OBJECT,
+            properties: {
+              program: { type: Type.STRING, enum: ['Horizon Europe', 'EIC Accelerator', 'Digital Europe', 'Erasmus+', 'Interreg', 'CEF', 'Other'] },
+              picValidation: {
+                type: Type.OBJECT,
+                properties: {
+                  status: { type: Type.STRING, enum: ['valid', 'invalid', 'missing', 'pending'] },
+                  pic: { type: Type.STRING },
+                  message: { type: Type.STRING }
+                },
+                required: ["status", "message"]
+              },
+              consortium: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    partnerName: { type: Type.STRING },
+                    pic: { type: Type.STRING },
+                    role: { type: Type.STRING, enum: ['Coordinator', 'Partner', 'Affiliated Entity'] },
+                    country: { type: Type.STRING },
+                    status: { type: Type.STRING, enum: ['confirmed', 'pending', 'missing'] }
+                  },
+                  required: ["partnerName", "pic", "role", "country", "status"]
+                }
+              },
+              workPackages: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    wpNumber: { type: Type.INTEGER },
+                    title: { type: Type.STRING },
+                    leader: { type: Type.STRING },
+                    status: { type: Type.STRING, enum: ['draft', 'final', 'missing'] }
+                  },
+                  required: ["wpNumber", "title", "leader", "status"]
+                }
+              },
+              ethicsAndData: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    requirement: { type: Type.STRING },
+                    status: { type: Type.STRING, enum: ['compliant', 'action needed', 'missing'] }
+                  },
+                  required: ["requirement", "status"]
+                }
+              },
+              budget: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    category: { type: Type.STRING, enum: ['Personnel', 'Subcontracting', 'Travel', 'Other Direct Costs', 'Indirect Costs'] },
+                    amount: { type: Type.NUMBER },
+                    status: { type: Type.STRING, enum: ['aligned', 'over limit', 'under limit', 'missing'] }
+                  },
+                  required: ["category", "amount", "status"]
+                }
+              },
+              trlAlignment: {
+                type: Type.OBJECT,
+                properties: {
+                  expectedTRL: { type: Type.STRING },
+                  currentTRL: { type: Type.STRING },
+                  status: { type: Type.STRING, enum: ['aligned', 'misaligned', 'unknown'] }
+                },
+                required: ["expectedTRL", "currentTRL", "status"]
+              },
+              euReadinessScore: { type: Type.NUMBER }
+            },
+            required: ["program", "picValidation", "consortium", "workPackages", "ethicsAndData", "budget", "trlAlignment", "euReadinessScore"]
           }
         },
         required: ["tasks", "documents", "submissionReadiness", "complianceWarnings", "alerts"]
