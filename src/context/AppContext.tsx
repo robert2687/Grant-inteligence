@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Grant, Evaluation, AdminData, UserProfile, Project } from '../types';
 
+export interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
+}
+
 interface AppState {
   userProfile: UserProfile | null;
   projects: Project[];
@@ -9,6 +14,7 @@ interface AppState {
   evaluations: Record<string, Evaluation>;
   proposals: Record<string, string>;
   adminPlans: Record<string, AdminData>;
+  proposalChats: Record<string, ChatMessage[]>;
   updateUserProfile: (profile: UserProfile) => void;
   addProject: (project: Project) => void;
   updateProject: (project: Project) => void;
@@ -18,6 +24,7 @@ interface AppState {
   addEvaluation: (evalData: Evaluation) => void;
   addProposal: (grantId: string, proposal: string) => void;
   addAdminPlan: (adminData: AdminData) => void;
+  updateProposalChat: (grantId: string, messages: ChatMessage[]) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -30,6 +37,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [evaluations, setEvaluations] = useState<Record<string, Evaluation>>({});
   const [proposals, setProposals] = useState<Record<string, string>>({});
   const [adminPlans, setAdminPlans] = useState<Record<string, AdminData>>({});
+  const [proposalChats, setProposalChats] = useState<Record<string, ChatMessage[]>>({});
 
   const updateUserProfile = (profile: UserProfile) => {
     setUserProfile(profile);
@@ -70,10 +78,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setAdminPlans(prev => ({ ...prev, [adminData.grantId]: adminData }));
   };
 
+  const updateProposalChat = (grantId: string, messages: ChatMessage[]) => {
+    setProposalChats(prev => ({ ...prev, [grantId]: messages }));
+  };
+
   return (
     <AppContext.Provider value={{ 
-      userProfile, projects, activeProjectId, grants, evaluations, proposals, adminPlans, 
-      updateUserProfile, addProject, updateProject, setActiveProjectId, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan 
+      userProfile, projects, activeProjectId, grants, evaluations, proposals, adminPlans, proposalChats,
+      updateUserProfile, addProject, updateProject, setActiveProjectId, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan, updateProposalChat 
     }}>
       {children}
     </AppContext.Provider>

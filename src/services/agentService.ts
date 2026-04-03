@@ -134,7 +134,7 @@ export const draftProposal = async (grant: Grant, evaluation: Evaluation | null,
   return response.text || '';
 };
 
-export const createProposalChat = (grant: Grant | null, evaluation: Evaluation | null, project: Project | null, profile: UserProfile | null) => {
+export const createProposalChat = (grant: Grant | null, evaluation: Evaluation | null, project: Project | null, profile: UserProfile | null, history?: {role: 'user' | 'model', content: string}[]) => {
   let systemInstruction = COPYWRITER_AGENT_PROMPT;
   
   let context = "Context Information:\n\n";
@@ -145,12 +145,18 @@ export const createProposalChat = (grant: Grant | null, evaluation: Evaluation |
 
   systemInstruction += `\n\n${context}\nUse this context to answer the user's questions, draft proposals, and provide guidance. If the user provides project details, use the saveProject tool to save them.`;
 
+  const formattedHistory = history?.map(msg => ({
+    role: msg.role,
+    parts: [{ text: msg.content }]
+  }));
+
   return ai.chats.create({
     model: 'gemini-3.1-pro-preview',
     config: {
       systemInstruction,
       tools: [{ functionDeclarations: [saveProjectDeclaration] }]
-    }
+    },
+    history: formattedHistory
   });
 };
 

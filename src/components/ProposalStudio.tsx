@@ -6,11 +6,11 @@ import Markdown from 'react-markdown';
 import { Project } from '../types';
 
 export default function ProposalStudio() {
-  const { grants, evaluations, proposals, addProposal, projects, activeProjectId, userProfile, updateProject, addProject, setActiveProjectId } = useAppContext();
+  const { grants, evaluations, proposals, addProposal, projects, activeProjectId, userProfile, updateProject, addProject, setActiveProjectId, proposalChats, updateProposalChat } = useAppContext();
   const [selectedGrantId, setSelectedGrantId] = useState<string>('');
   const [isDrafting, setIsDrafting] = useState(false);
   const [useProjectContext, setUseProjectContext] = useState(true);
-  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', content: string}[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
   const [showProjectForm, setShowProjectForm] = useState(false);
@@ -30,15 +30,23 @@ export default function ProposalStudio() {
   useEffect(() => {
     // Re-initialize chat when context changes
     if (selectedGrantId) {
+      const history = proposalChats[selectedGrantId] || [];
       chatInstanceRef.current = createProposalChat(
         selectedGrant || null,
         evaluation || null,
         useProjectContext ? activeProject : null,
-        userProfile
+        userProfile,
+        history
       );
-      setChatMessages([]);
+      setChatMessages(history);
     }
   }, [selectedGrantId, useProjectContext, activeProject, userProfile]);
+
+  useEffect(() => {
+    if (selectedGrantId && chatMessages.length > 0) {
+      updateProposalChat(selectedGrantId, chatMessages);
+    }
+  }, [chatMessages, selectedGrantId]);
 
   const handleDraft = async () => {
     if (!selectedGrant) return;
@@ -121,10 +129,10 @@ export default function ProposalStudio() {
         }
       }
 
-      setChatMessages(prev => [...prev, { role: 'assistant', content: response.text || '' }]);
+      setChatMessages(prev => [...prev, { role: 'model', content: response.text || '' }]);
     } catch (err) {
       console.error(err);
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error.' }]);
+      setChatMessages(prev => [...prev, { role: 'model', content: 'Sorry, I encountered an error.' }]);
     } finally {
       setIsChatting(false);
     }
