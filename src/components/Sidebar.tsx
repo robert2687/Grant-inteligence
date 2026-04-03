@@ -25,7 +25,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       <div className={`p-6 border-b border-gray-200 flex items-center ${isOpen ? 'justify-between' : 'justify-center'}`}>
         {isOpen ? (
           <div>
-            <h1 className="text-xl font-bold text-indigo-600 tracking-tight">GrantIt</h1>
+            <h1 className="text-xl font-bold text-indigo-600 tracking-tight">Grantit</h1>
             <p className="text-xs text-gray-500 mt-1 font-medium">Grant Intelligence System</p>
           </div>
         ) : (

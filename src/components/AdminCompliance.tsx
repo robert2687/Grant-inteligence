@@ -54,6 +54,10 @@ export default function AdminCompliance() {
     }
   };
 
+  const isAffected = (itemName: string) => {
+    return adminPlan?.alerts?.some(alert => alert.affectedItems.includes(itemName));
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <header>
@@ -86,17 +90,41 @@ export default function AdminCompliance() {
       </div>
 
       {adminPlan && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center space-x-2">
-              <Calendar className="w-5 h-5 text-indigo-600" />
-              <h3 className="font-semibold text-gray-900">Task Timeline</h3>
+        <div className="space-y-8">
+          {adminPlan.alerts && adminPlan.alerts.length > 0 && (
+            <div className="space-y-4">
+              {adminPlan.alerts.map((alert, i) => (
+                <div key={i} className={`p-4 rounded-lg border ${
+                  alert.severity === 'high' ? 'bg-red-50 border-red-200 text-red-800' :
+                  alert.severity === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+                  'bg-blue-50 border-blue-200 text-blue-800'
+                }`}>
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${
+                      alert.severity === 'high' ? 'text-red-500' :
+                      alert.severity === 'medium' ? 'text-amber-500' :
+                      'text-blue-500'
+                    }`} />
+                    <div>
+                      <h4 className="font-semibold">{alert.message}</h4>
+                      <p className="text-sm mt-1 opacity-90">{alert.nextSteps}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="p-0">
-              <ul className="divide-y divide-gray-100">
-                {adminPlan.tasks.map((task, i) => (
-                  <li key={i} className="p-4 flex items-start space-x-3 hover:bg-gray-50">
-                    {task.status === 'completed' ? (
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center space-x-2">
+                <Calendar className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-semibold text-gray-900">Task Timeline</h3>
+              </div>
+              <div className="p-0">
+                <ul className="divide-y divide-gray-100">
+                  {adminPlan.tasks.map((task, i) => (
+                    <li key={i} className={`p-4 flex items-start space-x-3 hover:bg-gray-50 ${isAffected(task.name) ? 'bg-red-50/50' : ''}`}>
+                      {task.status === 'completed' ? (
                       <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${getStatusIconColor(task.status)}`} />
                     ) : (
                       <Circle className={`w-5 h-5 shrink-0 mt-0.5 ${getStatusIconColor(task.status)}`} />
@@ -124,7 +152,7 @@ export default function AdminCompliance() {
             <div className="p-0">
               <ul className="divide-y divide-gray-100">
                 {adminPlan.documents.map((doc, i) => (
-                  <li key={i} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                  <li key={i} className={`p-4 flex items-center justify-between hover:bg-gray-50 ${isAffected(doc.name) ? 'bg-red-50/50' : ''}`}>
                     <span className="text-sm font-medium text-gray-900">{doc.name}</span>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(doc.status)}`}>
                       {doc.status}
@@ -144,7 +172,7 @@ export default function AdminCompliance() {
               <div className="p-0">
                 <ul className="divide-y divide-gray-100">
                   {adminPlan.submissionReadiness.map((indicator, i) => (
-                    <li key={i} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                    <li key={i} className={`p-4 flex items-center justify-between hover:bg-gray-50 ${isAffected(indicator.indicator) ? 'bg-red-50/50' : ''}`}>
                       <span className="text-sm font-medium text-gray-900">{indicator.indicator}</span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(indicator.status)}`}>
                         {indicator.status}
@@ -165,7 +193,7 @@ export default function AdminCompliance() {
               <div className="p-0">
                 <ul className="divide-y divide-gray-100">
                   {adminPlan.complianceWarnings.map((warning, i) => (
-                    <li key={i} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                    <li key={i} className={`p-4 flex items-center justify-between hover:bg-gray-50 ${isAffected(warning.warning) ? 'bg-red-50/50' : ''}`}>
                       <span className="text-sm font-medium text-gray-900">{warning.warning}</span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(warning.status)}`}>
                         {warning.status}
@@ -176,6 +204,7 @@ export default function AdminCompliance() {
               </div>
             </div>
           )}
+        </div>
         </div>
       )}
     </div>

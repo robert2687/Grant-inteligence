@@ -70,4 +70,11 @@ export interface AdminData {
   documents: { name: string; status: 'completed' | 'in progress' | 'missing' | 'overdue' }[];
   submissionReadiness: { indicator: string; status: 'completed' | 'in progress' | 'missing' | 'overdue' }[];
   complianceWarnings: { warning: string; status: 'completed' | 'in progress' | 'missing' | 'overdue' }[];
+  alerts?: {
+    type: 'deadline' | 'document' | 'registration' | 'task' | 'guideline';
+    message: string;
+    severity: 'high' | 'medium' | 'low';
+    affectedItems: string[];
+    nextSteps: string;
+  }[];
 }

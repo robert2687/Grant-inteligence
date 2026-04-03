@@ -219,9 +219,23 @@ export const generateAdminPlan = async (grant: Grant, project: Project | null): 
               },
               required: ["warning", "status"]
             }
+          },
+          alerts: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                type: { type: Type.STRING, enum: ["deadline", "document", "registration", "task", "guideline"] },
+                message: { type: Type.STRING },
+                severity: { type: Type.STRING, enum: ["high", "medium", "low"] },
+                affectedItems: { type: Type.ARRAY, items: { type: Type.STRING } },
+                nextSteps: { type: Type.STRING }
+              },
+              required: ["type", "message", "severity", "affectedItems", "nextSteps"]
+            }
           }
         },
-        required: ["tasks", "documents", "submissionReadiness", "complianceWarnings"]
+        required: ["tasks", "documents", "submissionReadiness", "complianceWarnings", "alerts"]
       }
     }
   });
