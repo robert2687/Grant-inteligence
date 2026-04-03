@@ -4,16 +4,16 @@ import { Grant, Evaluation, AdminData, UserProfile, Project } from '../types';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
 const SEARCH_AGENT_PROMPT = `You are an Autonomous Global Grant-Search Agent operating continuously.
-Mission: Identify, monitor, and update all relevant grants, funds, calls, and financing programs worldwide for RMD26.
+Mission: Identify, monitor, and update all relevant grants, funds, calls, and financing programs worldwide.
 Scope: Government grants, Horizon Europe, Digital Europe, CEF, EIC, Erasmus+, Innovation, R&D, AI/ML, cloud, cybersecurity, digital transformation, Private foundations, corporate innovation challenges, accelerators.
 Constraints: Always prioritize AI/ML, autonomous agents, cloud, SaaS, digital compliance, and innovation. Ensure global coverage. Avoid duplicates.`;
 
 const EVAL_AGENT_PROMPT = `You are a Grant Evaluation & Success Probability Agent.
-Mission: Evaluate how well RMD26 fits each funding opportunity and estimate the probability of success.
-Inputs: Grant description, Eligibility criteria, Funding priorities, Project concept from RMD26.`;
+Mission: Evaluate how well the user's project fits each funding opportunity and estimate the probability of success.
+Inputs: Grant description, Eligibility criteria, Funding priorities, Project concept.`;
 
 const COPYWRITER_AGENT_PROMPT = `You are a Grant Proposal Copywriter Agent specializing in high-impact, competitive funding applications.
-Mission: Write complete, compelling, and compliant grant proposals for RMD26.
+Mission: Write complete, compelling, and compliant grant proposals.
 Writing Style: Clear, structured, persuasive, Evidence-based, Aligned with EU and global grant standards, Tailored to evaluators' scoring criteria.`;
 
 const saveProjectDeclaration: FunctionDeclaration = {
@@ -35,11 +35,11 @@ const saveProjectDeclaration: FunctionDeclaration = {
   }
 };
 
-const ADMIN_AGENT_PROMPT = `You are a Grant Administration Assistant Agent responsible for managing all administrative, organizational, and compliance-related tasks across the entire grant lifecycle for RMD26.
+const ADMIN_AGENT_PROMPT = `You are a Grant Administration Assistant Agent responsible for managing all administrative, organizational, and compliance-related tasks across the entire grant lifecycle.
 Mission: Ensure that every grant application is administratively complete, compliant, well-organized, and submitted on time. Support the team with documentation, deadlines, templates, forms, and communication.`;
 
 export const scanForGrants = async (profile?: UserProfile | null, project?: Project | null): Promise<Grant[]> => {
-  let contents = "Find 3 new, highly relevant global grant opportunities for an AI/ML and autonomous agents startup named RMD26. Return realistic, currently active or upcoming grants if possible.";
+  let contents = "Find 3 new, highly relevant global grant opportunities. Return realistic, currently active or upcoming grants if possible.";
   if (profile) {
     contents += `\n\nPersonalize the recommendations based on this user profile:\n${JSON.stringify(profile, null, 2)}`;
   }
@@ -79,7 +79,7 @@ export const scanForGrants = async (profile?: UserProfile | null, project?: Proj
 };
 
 export const evaluateGrant = async (grant: Grant, project: Project | null): Promise<Evaluation> => {
-  let contents = `Evaluate this grant for RMD26 (AI/ML Autonomous Agents Startup):\n\n${JSON.stringify(grant, null, 2)}`;
+  let contents = `Evaluate this grant:\n\n${JSON.stringify(grant, null, 2)}`;
   if (project) {
     contents += `\n\nUser's Project Context:\n${JSON.stringify(project, null, 2)}\n\nEvaluate the grant based on how well it fits this project.`;
   }

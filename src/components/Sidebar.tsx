@@ -21,7 +21,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
       <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-indigo-600 tracking-tight">RMD26</h1>
+        <h1 className="text-xl font-bold text-indigo-600 tracking-tight">GrantIt</h1>
         <p className="text-xs text-gray-500 mt-1 font-medium">Grant Intelligence System</p>
       </div>
       <nav className="flex-1 p-4 space-y-1">

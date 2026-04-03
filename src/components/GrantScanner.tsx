@@ -76,7 +76,7 @@ export default function GrantScanner() {
             </div>
             
             <div className="mt-4">
-              <h4 className="text-sm font-semibold text-gray-900">Relevance to RMD26</h4>
+              <h4 className="text-sm font-semibold text-gray-900">Relevance</h4>
               <p className="text-sm text-gray-600 mt-1">{grant.relevance}</p>
             </div>
 
