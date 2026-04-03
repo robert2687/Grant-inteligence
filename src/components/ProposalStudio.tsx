@@ -1,17 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { draftProposal, createProposalChat } from '../services/agentService';
-import { PenTool, Loader2, Send, MessageSquare, ToggleLeft, ToggleRight } from 'lucide-react';
+import { PenTool, Loader2, Send, MessageSquare, ToggleLeft, ToggleRight, Plus, X, Save } from 'lucide-react';
 import Markdown from 'react-markdown';
+import { Project } from '../types';
 
 export default function ProposalStudio() {
-  const { grants, evaluations, proposals, addProposal, projects, activeProjectId, userProfile } = useAppContext();
+  const { grants, evaluations, proposals, addProposal, projects, activeProjectId, userProfile, updateProject, addProject, setActiveProjectId } = useAppContext();
   const [selectedGrantId, setSelectedGrantId] = useState<string>('');
   const [isDrafting, setIsDrafting] = useState(false);
   const [useProjectContext, setUseProjectContext] = useState(true);
   const [chatMessages, setChatMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [projectFormData, setProjectFormData] = useState<Project | null>(null);
   const chatInstanceRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -51,6 +54,30 @@ export default function ProposalStudio() {
     }
   };
 
+  const handleOpenProjectForm = () => {
+    if (activeProject) {
+      setProjectFormData(activeProject);
+    } else {
+      setProjectFormData({
+        id: crypto.randomUUID(),
+        name: '', summary: '', objectives: '', targetImpact: '', technologyArea: '', teamMembers: '', trlLevel: '', additionalNotes: ''
+      });
+    }
+    setShowProjectForm(true);
+  };
+
+  const handleSaveProjectForm = () => {
+    if (projectFormData) {
+      if (projects.some(p => p.id === projectFormData.id)) {
+        updateProject(projectFormData);
+      } else {
+        addProject(projectFormData);
+        setActiveProjectId(projectFormData.id);
+      }
+    }
+    setShowProjectForm(false);
+  };
+
   const handleSendMessage = async () => {
     if (!chatInput.trim() || !chatInstanceRef.current) return;
     
@@ -60,7 +87,40 @@ export default function ProposalStudio() {
     setIsChatting(true);
 
     try {
-      const response = await chatInstanceRef.current.sendMessage({ message: userMsg });
+      let response = await chatInstanceRef.current.sendMessage({ message: userMsg });
+      
+      if (response.functionCalls && response.functionCalls.length > 0) {
+        const call = response.functionCalls[0];
+        if (call.name === 'saveProject') {
+          const args = call.args as any;
+          const newProject: Project = {
+            id: activeProjectId || crypto.randomUUID(),
+            name: args.name || '',
+            summary: args.summary || '',
+            objectives: args.objectives || '',
+            targetImpact: args.targetImpact || '',
+            technologyArea: args.technologyArea || '',
+            teamMembers: args.teamMembers || '',
+            trlLevel: args.trlLevel || '',
+            additionalNotes: args.additionalNotes || ''
+          };
+          
+          if (activeProjectId && projects.some(p => p.id === activeProjectId)) {
+            updateProject(newProject);
+          } else {
+            addProject(newProject);
+            setActiveProjectId(newProject.id);
+          }
+
+          response = await chatInstanceRef.current.sendMessage([{
+            functionResponse: {
+              name: 'saveProject',
+              response: { status: 'success', project: newProject }
+            }
+          }]);
+        }
+      }
+
       setChatMessages(prev => [...prev, { role: 'assistant', content: response.text || '' }]);
     } catch (err) {
       console.error(err);
@@ -77,11 +137,26 @@ export default function ProposalStudio() {
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Proposal Studio</h2>
           <p className="text-gray-500 mt-2">Grant Proposal Copywriter Agent</p>
         </div>
-        <div className="flex items-center space-x-3 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
-          <span className="text-sm font-medium text-gray-700">Use My Project Context</span>
-          <button onClick={() => setUseProjectContext(!useProjectContext)} className="text-indigo-600">
-            {useProjectContext ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-gray-400" />}
-          </button>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+            <select
+              value={activeProjectId || ''}
+              onChange={(e) => setActiveProjectId(e.target.value)}
+              className="text-sm border-none bg-transparent focus:ring-0 text-gray-700 font-medium"
+            >
+              <option value="">-- Select Project --</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <button onClick={handleOpenProjectForm} className="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-indigo-600" title="Edit/Create Project">
+              <PenTool className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex items-center space-x-3 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+            <span className="text-sm font-medium text-gray-700">Use My Project Context</span>
+            <button onClick={() => setUseProjectContext(!useProjectContext)} className="text-indigo-600">
+              {useProjectContext ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-gray-400" />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -172,7 +247,7 @@ export default function ProposalStudio() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder={selectedGrantId ? "Ask the assistant..." : "Select a grant first..."}
+                placeholder={selectedGrantId ? "Ask the assistant or describe your project..." : "Select a grant first..."}
                 disabled={!selectedGrantId || isChatting}
                 className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border disabled:bg-gray-50"
               />
@@ -187,6 +262,62 @@ export default function ProposalStudio() {
           </div>
         </div>
       </div>
+
+      {showProjectForm && projectFormData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Project Details</h3>
+              <button onClick={() => setShowProjectForm(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+                <input type="text" value={projectFormData.name} onChange={e => setProjectFormData({...projectFormData, name: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
+                <textarea value={projectFormData.summary} onChange={e => setProjectFormData({...projectFormData, summary: e.target.value})} rows={3} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border"></textarea>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Technology Area</label>
+                  <input type="text" value={projectFormData.technologyArea} onChange={e => setProjectFormData({...projectFormData, technologyArea: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">TRL Level</label>
+                  <input type="text" value={projectFormData.trlLevel} onChange={e => setProjectFormData({...projectFormData, trlLevel: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Objectives</label>
+                <textarea value={projectFormData.objectives} onChange={e => setProjectFormData({...projectFormData, objectives: e.target.value})} rows={2} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border"></textarea>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Target Impact</label>
+                <textarea value={projectFormData.targetImpact} onChange={e => setProjectFormData({...projectFormData, targetImpact: e.target.value})} rows={2} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border"></textarea>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Team Members</label>
+                <input type="text" value={projectFormData.teamMembers} onChange={e => setProjectFormData({...projectFormData, teamMembers: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                <textarea value={projectFormData.additionalNotes} onChange={e => setProjectFormData({...projectFormData, additionalNotes: e.target.value})} rows={2} className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border"></textarea>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
+              <button onClick={() => setShowProjectForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={handleSaveProjectForm} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
+                <Save className="w-4 h-4" />
+                <span>Save Project</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

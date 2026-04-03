@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
 import { Grant, Evaluation, AdminData, UserProfile, Project } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
@@ -15,6 +15,25 @@ Inputs: Grant description, Eligibility criteria, Funding priorities, Project con
 const COPYWRITER_AGENT_PROMPT = `You are a Grant Proposal Copywriter Agent specializing in high-impact, competitive funding applications.
 Mission: Write complete, compelling, and compliant grant proposals for RMD26.
 Writing Style: Clear, structured, persuasive, Evidence-based, Aligned with EU and global grant standards, Tailored to evaluators' scoring criteria.`;
+
+const saveProjectDeclaration: FunctionDeclaration = {
+  name: "saveProject",
+  description: "Save a new project or update an existing project in the workspace. Use this when the user provides project details in the chat.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      name: { type: Type.STRING, description: "Project name" },
+      summary: { type: Type.STRING, description: "Short summary" },
+      objectives: { type: Type.STRING, description: "Objectives" },
+      targetImpact: { type: Type.STRING, description: "Target impact" },
+      technologyArea: { type: Type.STRING, description: "Technology area" },
+      teamMembers: { type: Type.STRING, description: "Team members (optional)" },
+      trlLevel: { type: Type.STRING, description: "TRL level (optional)" },
+      additionalNotes: { type: Type.STRING, description: "Additional notes" }
+    },
+    required: ["name", "summary", "objectives", "targetImpact", "technologyArea"]
+  }
+};
 
 const ADMIN_AGENT_PROMPT = `You are a Grant Administration Assistant Agent responsible for managing all administrative, organizational, and compliance-related tasks across the entire grant lifecycle for RMD26.
 Mission: Ensure that every grant application is administratively complete, compliant, well-organized, and submitted on time. Support the team with documentation, deadlines, templates, forms, and communication.`;
@@ -124,12 +143,13 @@ export const createProposalChat = (grant: Grant | null, evaluation: Evaluation |
   if (project) context += `User's Project:\n${JSON.stringify(project, null, 2)}\n\n`;
   if (profile) context += `User Profile:\n${JSON.stringify(profile, null, 2)}\n\n`;
 
-  systemInstruction += `\n\n${context}\nUse this context to answer the user's questions, draft proposals, and provide guidance.`;
+  systemInstruction += `\n\n${context}\nUse this context to answer the user's questions, draft proposals, and provide guidance. If the user provides project details, use the saveProject tool to save them.`;
 
   return ai.chats.create({
     model: 'gemini-3.1-pro-preview',
     config: {
       systemInstruction,
+      tools: [{ functionDeclarations: [saveProjectDeclaration] }]
     }
   });
 };
