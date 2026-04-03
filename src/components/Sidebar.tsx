@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Search, FileCheck, PenTool, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Search, FileCheck, PenTool, ShieldCheck, UserCircle } from 'lucide-react';
 import { Tab } from '../App';
 
 interface SidebarProps {
@@ -10,6 +10,7 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Orchestrator', icon: LayoutDashboard },
+    { id: 'profile', label: 'User Profile', icon: UserCircle },
     { id: 'scanner', label: 'Grant Scanner', icon: Search },
     { id: 'evaluator', label: 'Evaluator', icon: FileCheck },
     { id: 'studio', label: 'Proposal Studio', icon: PenTool },

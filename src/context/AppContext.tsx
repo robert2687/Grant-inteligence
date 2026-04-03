@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Grant, Evaluation, AdminData } from '../types';
+import { Grant, Evaluation, AdminData, UserProfile } from '../types';
 
 interface AppState {
+  userProfile: UserProfile | null;
   grants: Grant[];
   evaluations: Record<string, Evaluation>;
   proposals: Record<string, string>;
   adminPlans: Record<string, AdminData>;
+  updateUserProfile: (profile: UserProfile) => void;
   addGrants: (newGrants: Grant[]) => void;
   updateGrantStatus: (id: string, status: Grant['status']) => void;
   addEvaluation: (evalData: Evaluation) => void;
@@ -16,10 +18,15 @@ interface AppState {
 const AppContext = createContext<AppState | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [evaluations, setEvaluations] = useState<Record<string, Evaluation>>({});
   const [proposals, setProposals] = useState<Record<string, string>>({});
   const [adminPlans, setAdminPlans] = useState<Record<string, AdminData>>({});
+
+  const updateUserProfile = (profile: UserProfile) => {
+    setUserProfile(profile);
+  };
 
   const addGrants = (newGrants: Grant[]) => {
     setGrants(prev => {
@@ -48,7 +55,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AppContext.Provider value={{ grants, evaluations, proposals, adminPlans, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan }}>
+    <AppContext.Provider value={{ userProfile, grants, evaluations, proposals, adminPlans, updateUserProfile, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan }}>
       {children}
     </AppContext.Provider>
   );

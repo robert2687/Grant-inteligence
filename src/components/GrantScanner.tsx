@@ -4,7 +4,7 @@ import { scanForGrants } from '../services/agentService';
 import { Search, Loader2, ExternalLink } from 'lucide-react';
 
 export default function GrantScanner() {
-  const { grants, addGrants } = useAppContext();
+  const { grants, addGrants, userProfile } = useAppContext();
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -12,7 +12,7 @@ export default function GrantScanner() {
     setIsScanning(true);
     setError(null);
     try {
-      const newGrants = await scanForGrants();
+      const newGrants = await scanForGrants(userProfile);
       addGrants(newGrants);
     } catch (err: any) {
       setError(err.message || 'Failed to scan for grants.');

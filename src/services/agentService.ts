@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { Grant, Evaluation, AdminData } from '../types';
+import { Grant, Evaluation, AdminData, UserProfile } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
@@ -19,10 +19,14 @@ Writing Style: Clear, structured, persuasive, Evidence-based, Aligned with EU an
 const ADMIN_AGENT_PROMPT = `You are a Grant Administration Assistant Agent responsible for managing all administrative, organizational, and compliance-related tasks across the entire grant lifecycle for RMD26.
 Mission: Ensure that every grant application is administratively complete, compliant, well-organized, and submitted on time. Support the team with documentation, deadlines, templates, forms, and communication.`;
 
-export const scanForGrants = async (): Promise<Grant[]> => {
+export const scanForGrants = async (profile?: UserProfile | null): Promise<Grant[]> => {
+  let contents = "Find 3 new, highly relevant global grant opportunities for an AI/ML and autonomous agents startup named RMD26. Return realistic, currently active or upcoming grants if possible.";
+  if (profile) {
+    contents += `\n\nPersonalize the recommendations based on this user profile:\n${JSON.stringify(profile, null, 2)}`;
+  }
   const response = await ai.models.generateContent({
     model: 'gemini-3.1-pro-preview',
-    contents: "Find 3 new, highly relevant global grant opportunities for an AI/ML and autonomous agents startup named RMD26. Return realistic, currently active or upcoming grants if possible.",
+    contents,
     config: {
       systemInstruction: SEARCH_AGENT_PROMPT,
       responseMimeType: 'application/json',

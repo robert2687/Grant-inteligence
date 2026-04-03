@@ -1,3 +1,25 @@
+export interface UserProfile {
+  firstName: string;
+  lastName: string;
+  dob: string;
+  gender: string;
+  country: string;
+  city: string;
+  photoUrl: string;
+  bio: string;
+  profession: string;
+  industry: string;
+  yearsOfExperience: string;
+  skills: string;
+  certifications: string;
+  website: string;
+  preferredGrantTypes: string;
+  preferredRegions: string;
+  fundingSizeRange: string;
+  projectThemes: string;
+  preferredDeadlines: string;
+}
+
 export interface Grant {
   id: string;
   name: string;
