@@ -75,7 +75,7 @@ export const scanForGrants = async (profile?: UserProfile | null, project?: Proj
   });
   
   const grants = JSON.parse(response.text || '[]');
-  return grants.map((g: any) => ({ ...g, status: 'discovered' }));
+  return grants.map((g: Omit<Grant, 'status'>) => ({ ...g, status: 'discovered' as const }));
 };
 
 export const evaluateGrant = async (grant: Grant, project: Project | null): Promise<Evaluation> => {
