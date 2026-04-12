@@ -97,9 +97,15 @@ export default function AdminCompliance() {
   const filteredDocuments = useMemo(() => {
     if (!adminPlan) return [];
     if (regionMode === 'EU') {
-      return adminPlan.documents.filter(d => !d.name.toLowerCase().includes('irs') && !d.name.toLowerCase().includes('w9'));
+      return adminPlan.documents.filter(d => {
+        const lowerName = d.name.toLowerCase();
+        return !lowerName.includes('irs') && !lowerName.includes('w9');
+      });
     } else {
-      return adminPlan.documents.filter(d => !d.name.toLowerCase().includes('gdpr') && !d.name.toLowerCase().includes('pic'));
+      return adminPlan.documents.filter(d => {
+        const lowerName = d.name.toLowerCase();
+        return !lowerName.includes('gdpr') && !lowerName.includes('pic');
+      });
     }
   }, [adminPlan, regionMode]);
 
