@@ -103,6 +103,10 @@ export default function AdminCompliance() {
     }
   }, [adminPlan, regionMode]);
 
+  const completedDocumentsCount = useMemo(() => {
+    return filteredDocuments.reduce((count, d) => count + (d.status === 'completed' ? 1 : 0), 0);
+  }, [filteredDocuments]);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -302,7 +306,7 @@ export default function AdminCompliance() {
                     <h3 className="font-semibold text-gray-900">Document Checklist ({regionMode})</h3>
                   </div>
                   <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded-full">
-                    {filteredDocuments.filter(d => d.status === 'completed').length} / {filteredDocuments.length}
+                    {completedDocumentsCount} / {filteredDocuments.length}
                   </span>
                 </div>
                 <div className="p-0">
