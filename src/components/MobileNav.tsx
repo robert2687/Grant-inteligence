@@ -30,6 +30,7 @@ export default function MobileNav({ activeTab, setActiveTab }: MobileNavProps) {
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
+            aria-current={isActive ? 'page' : undefined}
             className={`flex flex-col items-center justify-center min-w-[64px] h-full transition-colors ${
               isActive ? 'text-indigo-600' : 'text-gray-500'
             }`}
