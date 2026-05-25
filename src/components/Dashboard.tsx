@@ -2,22 +2,24 @@ import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Tab } from '../App';
 import { Activity, Target, FileText, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) => void }) {
   const { grants, evaluations, proposals } = useAppContext();
+  const { t } = useLanguage();
 
   const stats = [
-    { label: 'Discovered Grants', value: grants.length, icon: Activity, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: 'Evaluated', value: Object.keys(evaluations).length, icon: Target, color: 'text-purple-600', bg: 'bg-purple-100' },
-    { label: 'Proposals Drafted', value: Object.keys(proposals).length, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-100' },
-    { label: 'Submitted', value: grants.filter(g => g.status === 'submitted').length, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+    { label: t('discoveredGrants'), value: grants.length, icon: Activity, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: t('evaluated'), value: Object.keys(evaluations).length, icon: Target, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: t('proposalsDrafted'), value: Object.keys(proposals).length, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { label: t('submitted'), value: grants.filter(g => g.status === 'submitted').length, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
   ];
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <header>
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Orchestrator Dashboard</h2>
-        <p className="text-gray-500 mt-2">System overview and multi-agent status.</p>
+        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">{t('dashboardTitle')}</h2>
+        <p className="text-gray-500 mt-2">{t('dashboardSubtitle')}</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -39,9 +41,9 @@ export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) =
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Opportunities</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('recentOpportunities')}</h3>
           <button onClick={() => setActiveTab('scanner')} className="text-sm text-indigo-600 font-medium hover:text-indigo-700">
-            View All
+            {t('viewAll')}
           </button>
         </div>
         <div className="divide-y divide-gray-200">
@@ -60,7 +62,7 @@ export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) =
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
                     {grant.status}
                   </span>
-                  <span className="text-sm font-medium text-indigo-600">Fit: {grant.fitScore}%</span>
+                  <span className="text-sm font-medium text-indigo-600">{t('fit')}: {grant.fitScore}%</span>
                 </div>
               </div>
             ))

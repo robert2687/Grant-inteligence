@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Search, FileCheck, PenTool, ShieldCheck, UserCircle, FolderGit2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Search, FileCheck, PenTool, ShieldCheck, UserCircle, FolderGit2, ChevronLeft, ChevronRight, Languages } from 'lucide-react';
 import { Tab } from '../App';
+import { useLanguage, Locale } from '../context/LanguageContext';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -9,15 +10,16 @@ interface SidebarProps {
 
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const { t, locale, setLocale } = useLanguage();
 
   const navItems = [
-    { id: 'dashboard', label: 'Orchestrator', icon: LayoutDashboard },
-    { id: 'profile', label: 'User Profile', icon: UserCircle },
-    { id: 'projects', label: 'My Projects', icon: FolderGit2 },
-    { id: 'scanner', label: 'Grant Scanner', icon: Search },
-    { id: 'evaluator', label: 'Evaluator', icon: FileCheck },
-    { id: 'studio', label: 'Proposal Studio', icon: PenTool },
-    { id: 'admin', label: 'Admin & Compliance', icon: ShieldCheck },
+    { id: 'dashboard', label: t('orchestrator'), icon: LayoutDashboard },
+    { id: 'profile', label: t('userProfile'), icon: UserCircle },
+    { id: 'projects', label: t('myProjects'), icon: FolderGit2 },
+    { id: 'scanner', label: t('grantScanner'), icon: Search },
+    { id: 'evaluator', label: t('evaluator'), icon: FileCheck },
+    { id: 'studio', label: t('proposalStudio'), icon: PenTool },
+    { id: 'admin', label: t('adminCompliance'), icon: ShieldCheck },
   ] as const;
 
   return (
@@ -41,7 +43,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               title={!isOpen ? item.label : undefined}
-              className={`w-full flex items-center ${isOpen ? 'space-x-3 px-4' : 'justify-center px-0'} py-3 rounded-lg text-sm font-medium transition-colors ${
+              className={`w-full flex items-center ${isOpen ? 'space-x-3 px-4' : 'justify-center px-0'} py-4 md:py-3 rounded-lg text-sm font-medium transition-colors ${
                 isActive 
                   ? 'bg-indigo-50 text-indigo-700' 
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -53,14 +55,29 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 space-y-1">
+        <div className={`flex items-center ${isOpen ? 'px-4 space-x-3' : 'justify-center'} py-2`}>
+          <Languages className="w-5 h-5 text-gray-400" />
+          {isOpen && (
+            <select
+              aria-label="Select language"
+              value={locale}
+              onChange={(e) => setLocale(e.target.value as Locale)}
+              className="bg-transparent text-sm font-medium text-gray-600 focus:outline-none"
+            >
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+            </select>
+          )}
+        </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full flex items-center ${isOpen ? 'space-x-3 px-4' : 'justify-center px-0'} py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors`}
-          title={isOpen ? "Hide Menu" : "Show Menu"}
+          title={isOpen ? t('hideMenu') : t('showMenu')}
         >
           {isOpen ? <ChevronLeft className="w-5 h-5 shrink-0" /> : <ChevronRight className="w-5 h-5 shrink-0" />}
-          {isOpen && <span>Hide Menu</span>}
+          {isOpen && <span>{t('hideMenu')}</span>}
         </button>
       </div>
     </div>
