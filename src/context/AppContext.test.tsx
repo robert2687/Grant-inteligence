@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
 import { AppProvider, useAppContext } from './AppContext';
 import { UserProfile, Project, Grant, Evaluation, AdminData } from '../types';
 
@@ -27,7 +28,7 @@ const TestConsumer = () => {
 
   return (
     <div>
-      <div data-testid="userProfile">{userProfile ? userProfile.name : 'null'}</div>
+      <div data-testid="userProfile">{userProfile ? userProfile.firstName : 'null'}</div>
       <div data-testid="projects-count">{projects.length}</div>
       <div data-testid="activeProjectId">{activeProjectId || 'null'}</div>
       <div data-testid="grants-count">{grants.length}</div>
@@ -36,15 +37,89 @@ const TestConsumer = () => {
       <div data-testid="adminPlans-count">{Object.keys(adminPlans).length}</div>
       <div data-testid="proposalChats-count">{Object.keys(proposalChats).length}</div>
 
-      <button onClick={() => updateUserProfile({ name: 'Alice', expertise: [], interests: [] })}>Update User Profile</button>
-      <button onClick={() => addProject({ id: 'p1', name: 'Project 1', description: '' })}>Add Project</button>
-      <button onClick={() => updateProject({ id: 'p1', name: 'Updated Project 1', description: '' })}>Update Project</button>
+      <button onClick={() => updateUserProfile({
+        firstName: 'Alice',
+        lastName: 'Smith',
+        dob: '',
+        gender: '',
+        country: '',
+        city: '',
+        photoUrl: '',
+        bio: '',
+        profession: '',
+        industry: '',
+        yearsOfExperience: '',
+        skills: '',
+        certifications: '',
+        website: '',
+        preferredGrantTypes: '',
+        preferredRegions: '',
+        fundingSizeRange: '',
+        projectThemes: '',
+        preferredDeadlines: '',
+      })}>Update User Profile</button>
+      <button onClick={() => addProject({
+        id: 'p1',
+        name: 'Project 1',
+        summary: '',
+        objectives: '',
+        targetImpact: '',
+        technologyArea: '',
+        teamMembers: '',
+        trlLevel: '',
+        additionalNotes: '',
+      })}>Add Project</button>
+      <button onClick={() => updateProject({
+        id: 'p1',
+        name: 'Updated Project 1',
+        summary: '',
+        objectives: '',
+        targetImpact: '',
+        technologyArea: '',
+        teamMembers: '',
+        trlLevel: '',
+        additionalNotes: '',
+      })}>Update Project</button>
       <button onClick={() => setActiveProjectId('p1')}>Set Active Project</button>
-      <button onClick={() => addGrants([{ id: 'g1', title: 'Grant 1', description: '', amount: 1000, deadline: '', status: 'new' }])}>Add Grants</button>
+      <button onClick={() => addGrants([{
+        id: 'g1',
+        name: 'Grant 1',
+        region: 'EU',
+        amount: '1000',
+        deadline: '',
+        eligibility: '',
+        themes: [],
+        sourceLink: '',
+        fitScore: 0,
+        relevance: '',
+        status: 'discovered',
+      }])}>Add Grants</button>
       <button onClick={() => updateGrantStatus('g1', 'evaluating')}>Update Grant Status</button>
-      <button onClick={() => addEvaluation({ grantId: 'g1', score: 95, comments: 'Good', strengths: [], weaknesses: [], recommendations: [] })}>Add Evaluation</button>
+      <button onClick={() => addEvaluation({
+        grantId: 'g1',
+        eligibilityMatch: 90,
+        thematicFit: 90,
+        innovationStrength: 90,
+        trlAlignment: 'High',
+        geographicFit: 90,
+        consortiumReqs: 'None',
+        budgetFeasibility: 'Feasible',
+        adminComplexity: 'Low',
+        competitionLevel: 'Medium',
+        overallScore: 95,
+        justification: 'Good',
+        risks: [],
+        recommendations: [],
+        decision: 'Go',
+      })}>Add Evaluation</button>
       <button onClick={() => addProposal('g1', 'My Proposal')}>Add Proposal</button>
-      <button onClick={() => addAdminPlan({ grantId: 'g1', plan: 'My Plan', schedule: [], resources: [] })}>Add Admin Plan</button>
+      <button onClick={() => addAdminPlan({
+        grantId: 'g1',
+        tasks: [],
+        documents: [],
+        submissionReadiness: [],
+        complianceWarnings: [],
+      })}>Add Admin Plan</button>
       <button onClick={() => updateProposalChat('g1', [{ role: 'user', content: 'Hello' }])}>Update Proposal Chat</button>
     </div>
   );
