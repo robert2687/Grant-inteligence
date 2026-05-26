@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { scanForGrants } from '../services/agentService';
 import { Search, Loader2, ExternalLink, Filter } from 'lucide-react';
@@ -15,7 +15,11 @@ export default function GrantScanner() {
   const [deadlineFilter, setDeadlineFilter] = useState('');
   const [minFitScore, setMinFitScore] = useState<number | ''>('');
 
-  const activeProject = projects.find(p => p.id === activeProjectId) || null;
+  // Memoize active project lookup to avoid re-calculating on every render
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
 
   const handleScan = async () => {
     setIsScanning(true);
@@ -30,13 +34,20 @@ export default function GrantScanner() {
     }
   };
 
-  const filteredGrants = grants.filter(grant => {
-    if (regionFilter && !grant.region.toLowerCase().includes(regionFilter.toLowerCase())) return false;
-    if (amountFilter && !grant.amount.toLowerCase().includes(amountFilter.toLowerCase())) return false;
-    if (deadlineFilter && grant.deadline > deadlineFilter) return false;
-    if (minFitScore !== '' && grant.fitScore < minFitScore) return false;
-    return true;
-  });
+  // Memoize filtered grants to prevent redundant calculations on unrelated re-renders
+  // Pre-calculating lower-cased filter strings improves performance in the filter loop
+  const filteredGrants = useMemo(() => {
+    const lowRegion = regionFilter.toLowerCase();
+    const lowAmount = amountFilter.toLowerCase();
+
+    return grants.filter(grant => {
+      if (regionFilter && !grant.region.toLowerCase().includes(lowRegion)) return false;
+      if (amountFilter && !grant.amount.toLowerCase().includes(lowAmount)) return false;
+      if (deadlineFilter && grant.deadline > deadlineFilter) return false;
+      if (minFitScore !== '' && grant.fitScore < minFitScore) return false;
+      return true;
+    });
+  }, [grants, regionFilter, amountFilter, deadlineFilter, minFitScore]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
