@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Tab } from '../App';
 import { Activity, Target, FileText, CheckCircle } from 'lucide-react';
@@ -8,12 +8,16 @@ export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) =
   const { grants, evaluations, proposals } = useAppContext();
   const { t } = useLanguage();
 
-  const stats = [
+  // Memoize stats to avoid O(N) filtering and object creation on every render
+  const stats = useMemo(() => [
     { label: t('discoveredGrants'), value: grants.length, icon: Activity, color: 'text-blue-600', bg: 'bg-blue-100' },
     { label: t('evaluated'), value: Object.keys(evaluations).length, icon: Target, color: 'text-purple-600', bg: 'bg-purple-100' },
     { label: t('proposalsDrafted'), value: Object.keys(proposals).length, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-100' },
     { label: t('submitted'), value: grants.filter(g => g.status === 'submitted').length, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-  ];
+  ], [grants, evaluations, proposals, t]);
+
+  // Memoize the recent opportunities slice to avoid redundant array operations
+  const recentGrants = useMemo(() => grants.slice(0, 5), [grants]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -52,7 +56,7 @@ export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) =
               No grants discovered yet. Go to the Grant Scanner to start.
             </div>
           ) : (
-            grants.slice(0, 5).map(grant => (
+            recentGrants.map(grant => (
               <div key={grant.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div>
                   <h4 className="font-medium text-gray-900">{grant.name}</h4>
