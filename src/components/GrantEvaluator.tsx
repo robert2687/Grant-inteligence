@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { evaluateGrant } from '../services/agentService';
 import { FileCheck, Loader2, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
@@ -8,9 +8,21 @@ export default function GrantEvaluator() {
   const [selectedGrantId, setSelectedGrantId] = useState<string>('');
   const [isEvaluating, setIsEvaluating] = useState(false);
 
-  const selectedGrant = grants.find(g => g.id === selectedGrantId);
-  const evaluation = selectedGrantId ? evaluations[selectedGrantId] : null;
-  const activeProject = projects.find(p => p.id === activeProjectId) || null;
+  // Memoize lookups to prevent re-calculations on every render
+  const selectedGrant = useMemo(() =>
+    grants.find(g => g.id === selectedGrantId) || null,
+    [grants, selectedGrantId]
+  );
+
+  const evaluation = useMemo(() =>
+    selectedGrantId ? evaluations[selectedGrantId] : null,
+    [evaluations, selectedGrantId]
+  );
+
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
 
   const handleEvaluate = async () => {
     if (!selectedGrant) return;
