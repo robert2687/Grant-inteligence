@@ -38,9 +38,21 @@ export default function AdminCompliance() {
   const [regionMode, setRegionMode] = useState<'EU' | 'US'>('EU');
   const [expandedTask, setExpandedTask] = useState<number | null>(null);
 
-  const selectedGrant = grants.find(g => g.id === selectedGrantId);
-  const adminPlan = selectedGrantId ? adminPlans[selectedGrantId] : null;
-  const activeProject = projects.find(p => p.id === activeProjectId) || null;
+  // Memoize lookups to prevent re-calculations on every render
+  const selectedGrant = useMemo(() =>
+    grants.find(g => g.id === selectedGrantId) || null,
+    [grants, selectedGrantId]
+  );
+
+  const adminPlan = useMemo(() =>
+    selectedGrantId ? adminPlans[selectedGrantId] : null,
+    [adminPlans, selectedGrantId]
+  );
+
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
 
   const handleGenerate = async () => {
     if (!selectedGrant) return;
@@ -56,62 +68,74 @@ export default function AdminCompliance() {
     }
   };
 
+  // Performance: Pre-calculate affected items in a Set for O(1) lookups
+  const affectedItemsSet = useMemo(() => {
+    const set = new Set<string>();
+    adminPlan?.alerts?.forEach(alert => {
+      alert.affectedItems.forEach(item => set.add(item));
+    });
+    return set;
+  }, [adminPlan?.alerts]);
+
   const isAffected = (itemName: string) => {
-    return adminPlan?.alerts?.some(alert => alert.affectedItems.includes(itemName));
+    return affectedItemsSet.has(itemName);
   };
 
   const handleFileUpload = (docName: string) => {
     alert(`Simulating upload for: ${docName}`);
   };
 
-  const progress = useMemo(() => {
-    if (!adminPlan) return 0;
-    const total = adminPlan.tasks.length + adminPlan.documents.length;
-    if (total === 0) return 0;
-    const completed = 
-      adminPlan.tasks.filter(t => t.status === 'completed').length + 
-      adminPlan.documents.filter(d => d.status === 'completed').length;
-    return Math.round((completed / total) * 100);
-  }, [adminPlan]);
-
-  const readinessScore = useMemo(() => {
-    if (!adminPlan || !adminPlan.submissionReadiness) return 0;
-    const total = adminPlan.submissionReadiness.length;
-    if (total === 0) return 0;
-    const completed = adminPlan.submissionReadiness.filter(i => i.status === 'completed').length;
-    return Math.round((completed / total) * 100);
-  }, [adminPlan]);
-
-  const taskSummary = useMemo(() => {
-    if (!adminPlan) return { completed: 0, inProgress: 0, missing: 0, overdue: 0 };
-    return adminPlan.tasks.reduce((acc, task) => {
-      if (task.status === 'completed') acc.completed++;
-      else if (task.status === 'in progress') acc.inProgress++;
-      else if (task.status === 'missing') acc.missing++;
-      else if (task.status === 'overdue') acc.overdue++;
-      return acc;
-    }, { completed: 0, inProgress: 0, missing: 0, overdue: 0 });
-  }, [adminPlan]);
-
-  // Filter requirements based on region mode (simulated logic)
-  const filteredDocuments = useMemo(() => {
-    if (!adminPlan) return [];
-    if (regionMode === 'EU') {
-      return adminPlan.documents.filter(d => {
-        const lowerName = d.name.toLowerCase();
-        return !lowerName.includes('irs') && !lowerName.includes('w9');
-      });
-    } else {
-      return adminPlan.documents.filter(d => {
-        const lowerName = d.name.toLowerCase();
-        return !lowerName.includes('gdpr') && !lowerName.includes('pic');
-      });
+  // Performance: Consolidate multiple derived states into a single pass useMemo
+  const { progress, readinessScore, taskSummary, filteredDocuments, completedDocumentsCount } = useMemo(() => {
+    if (!adminPlan) {
+      return {
+        progress: 0,
+        readinessScore: 0,
+        taskSummary: { completed: 0, inProgress: 0, missing: 0, overdue: 0 },
+        filteredDocuments: [],
+        completedDocumentsCount: 0
+      };
     }
-  }, [adminPlan, regionMode]);
 
-  const completedDocumentsCount = useMemo(() => {
-    return filteredDocuments.reduce((count, d) => count + (d.status === 'completed' ? 1 : 0), 0);
-  }, [filteredDocuments]);
+    // 1. Task Summary and part of Progress
+    const summary = { completed: 0, inProgress: 0, missing: 0, overdue: 0 };
+    adminPlan.tasks.forEach(task => {
+      if (task.status === 'completed') summary.completed++;
+      else if (task.status === 'in progress') summary.inProgress++;
+      else if (task.status === 'missing') summary.missing++;
+      else if (task.status === 'overdue') summary.overdue++;
+    });
+
+    // 2. Filtered Documents and part of Progress
+    const filteredDocs = adminPlan.documents.filter(d => {
+      const lowerName = d.name.toLowerCase();
+      if (regionMode === 'EU') {
+        return !lowerName.includes('irs') && !lowerName.includes('w9');
+      } else {
+        return !lowerName.includes('gdpr') && !lowerName.includes('pic');
+      }
+    });
+
+    const completedDocsCount = filteredDocs.reduce((count, d) => count + (d.status === 'completed' ? 1 : 0), 0);
+
+    // 3. Overall Progress
+    const totalItems = adminPlan.tasks.length + adminPlan.documents.length;
+    const totalCompleted = summary.completed + adminPlan.documents.filter(d => d.status === 'completed').length;
+    const prog = totalItems === 0 ? 0 : Math.round((totalCompleted / totalItems) * 100);
+
+    // 4. Readiness Score
+    const readinessTotal = adminPlan.submissionReadiness?.length || 0;
+    const readinessCompleted = adminPlan.submissionReadiness?.filter(i => i.status === 'completed').length || 0;
+    const readiness = readinessTotal === 0 ? 0 : Math.round((readinessCompleted / readinessTotal) * 100);
+
+    return {
+      progress: prog,
+      readinessScore: readiness,
+      taskSummary: summary,
+      filteredDocuments: filteredDocs,
+      completedDocumentsCount: completedDocsCount
+    };
+  }, [adminPlan, regionMode]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { AppProvider, useAppContext } from './AppContext';
@@ -27,7 +28,7 @@ const TestConsumer = () => {
 
   return (
     <div>
-      <div data-testid="userProfile">{userProfile ? userProfile.name : 'null'}</div>
+      <div data-testid="userProfile">{userProfile ? userProfile.firstName : 'null'}</div>
       <div data-testid="projects-count">{projects.length}</div>
       <div data-testid="activeProjectId">{activeProjectId || 'null'}</div>
       <div data-testid="grants-count">{grants.length}</div>
@@ -36,15 +37,15 @@ const TestConsumer = () => {
       <div data-testid="adminPlans-count">{Object.keys(adminPlans).length}</div>
       <div data-testid="proposalChats-count">{Object.keys(proposalChats).length}</div>
 
-      <button onClick={() => updateUserProfile({ name: 'Alice', expertise: [], interests: [] })}>Update User Profile</button>
-      <button onClick={() => addProject({ id: 'p1', name: 'Project 1', description: '' })}>Add Project</button>
-      <button onClick={() => updateProject({ id: 'p1', name: 'Updated Project 1', description: '' })}>Update Project</button>
+      <button onClick={() => updateUserProfile({ firstName: 'Alice' } as UserProfile)}>Update User Profile</button>
+      <button onClick={() => addProject({ id: 'p1', name: 'Project 1' } as Project)}>Add Project</button>
+      <button onClick={() => updateProject({ id: 'p1', name: 'Updated Project 1' } as Project)}>Update Project</button>
       <button onClick={() => setActiveProjectId('p1')}>Set Active Project</button>
-      <button onClick={() => addGrants([{ id: 'g1', title: 'Grant 1', description: '', amount: 1000, deadline: '', status: 'new' }])}>Add Grants</button>
+      <button onClick={() => addGrants([{ id: 'g1', name: 'Grant 1', status: 'discovered' } as Grant])}>Add Grants</button>
       <button onClick={() => updateGrantStatus('g1', 'evaluating')}>Update Grant Status</button>
-      <button onClick={() => addEvaluation({ grantId: 'g1', score: 95, comments: 'Good', strengths: [], weaknesses: [], recommendations: [] })}>Add Evaluation</button>
+      <button onClick={() => addEvaluation({ grantId: 'g1' } as Evaluation)}>Add Evaluation</button>
       <button onClick={() => addProposal('g1', 'My Proposal')}>Add Proposal</button>
-      <button onClick={() => addAdminPlan({ grantId: 'g1', plan: 'My Plan', schedule: [], resources: [] })}>Add Admin Plan</button>
+      <button onClick={() => addAdminPlan({ grantId: 'g1' } as AdminData)}>Add Admin Plan</button>
       <button onClick={() => updateProposalChat('g1', [{ role: 'user', content: 'Hello' }])}>Update Proposal Chat</button>
     </div>
   );
