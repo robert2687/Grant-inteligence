@@ -82,12 +82,14 @@ export default function AdminCompliance() {
 
   // Consolidate admin stats and filtered documents into a single-pass memo to reduce array iterations
   const adminStats = useMemo(() => {
+    type AdminPlan = NonNullable<typeof adminPlan>;
+
     if (!adminPlan) {
       return {
         progress: 0,
         readinessScore: 0,
         taskSummary: { completed: 0, inProgress: 0, missing: 0, overdue: 0 },
-        filteredDocuments: [] as typeof adminPlan.documents,
+        filteredDocuments: [] as AdminPlan['documents'],
         completedDocumentsCount: 0
       };
     }
