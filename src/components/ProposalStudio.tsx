@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { draftProposal, createProposalChat } from '../services/agentService';
 import { PenTool, Loader2, Send, MessageSquare, ToggleLeft, ToggleRight, Plus, X, Save } from 'lucide-react';
@@ -18,10 +18,32 @@ export default function ProposalStudio() {
   const chatInstanceRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const selectedGrant = grants.find(g => g.id === selectedGrantId);
-  const evaluation = selectedGrantId ? evaluations[selectedGrantId] : null;
-  const proposal = selectedGrantId ? proposals[selectedGrantId] : null;
-  const activeProject = projects.find(p => p.id === activeProjectId) || null;
+  // Memoize lookups to prevent O(n) operations and redundant renders on every state change
+  const selectedGrant = useMemo(() =>
+    grants.find(g => g.id === selectedGrantId) || null,
+    [grants, selectedGrantId]
+  );
+
+  const evaluation = useMemo(() =>
+    selectedGrantId ? evaluations[selectedGrantId] : null,
+    [evaluations, selectedGrantId]
+  );
+
+  const proposal = useMemo(() =>
+    selectedGrantId ? proposals[selectedGrantId] : null,
+    [proposals, selectedGrantId]
+  );
+
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
+
+  // Memoize the rendered Markdown to prevent expensive re-parsing when unrelated state (like chat input) changes
+  const renderedProposal = useMemo(() => {
+    if (!proposal) return null;
+    return <Markdown>{proposal}</Markdown>;
+  }, [proposal]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -200,8 +222,8 @@ export default function ProposalStudio() {
             <span className="text-xs text-gray-500">Markdown Format</span>
           </div>
           <div className="p-8 overflow-auto flex-1 prose prose-indigo max-w-none">
-            {proposal ? (
-              <Markdown>{proposal}</Markdown>
+            {renderedProposal ? (
+              renderedProposal
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
                 Generate a draft or ask the assistant to write one.
