@@ -1,9 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { draftProposal, createProposalChat } from '../services/agentService';
 import { PenTool, Loader2, Send, MessageSquare, ToggleLeft, ToggleRight, Plus, X, Save } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { Project } from '../types';
+
+// Memoize Markdown component to prevent re-parsing during parent re-renders
+const MemoizedMarkdown = React.memo(Markdown);
 
 export default function ProposalStudio() {
   const { grants, evaluations, proposals, addProposal, projects, activeProjectId, userProfile, updateProject, addProject, setActiveProjectId, proposalChats, updateProposalChat } = useAppContext();
@@ -18,10 +21,41 @@ export default function ProposalStudio() {
   const chatInstanceRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const selectedGrant = grants.find(g => g.id === selectedGrantId);
-  const evaluation = selectedGrantId ? evaluations[selectedGrantId] : null;
-  const proposal = selectedGrantId ? proposals[selectedGrantId] : null;
-  const activeProject = projects.find(p => p.id === activeProjectId) || null;
+  // Memoize lookups to prevent redundant O(n) searches and object lookups on every render
+  const selectedGrant = useMemo(() =>
+    grants.find(g => g.id === selectedGrantId) || null,
+    [grants, selectedGrantId]
+  );
+
+  const evaluation = useMemo(() =>
+    selectedGrantId ? evaluations[selectedGrantId] : null,
+    [evaluations, selectedGrantId]
+  );
+
+  const proposal = useMemo(() =>
+    selectedGrantId ? proposals[selectedGrantId] : null,
+    [proposals, selectedGrantId]
+  );
+
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
+
+  // Performance: Memoize dropdown options to avoid redundant iterations and string operations
+  const projectOptions = useMemo(() =>
+    projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>),
+    [projects]
+  );
+
+  const grantOptions = useMemo(() =>
+    grants.map(g => (
+      <option key={g.id} value={g.id}>
+        {g.name} {evaluations[g.id]?.decision === 'Go' ? '(GO)' : ''}
+      </option>
+    )),
+    [grants, evaluations]
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -153,7 +187,7 @@ export default function ProposalStudio() {
               className="text-sm border-none bg-transparent focus:ring-0 text-gray-700 font-medium"
             >
               <option value="">-- Select Project --</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {projectOptions}
             </select>
             <button onClick={handleOpenProjectForm} className="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-indigo-600" title="Edit/Create Project">
               <PenTool className="w-4 h-4" />
@@ -177,9 +211,7 @@ export default function ProposalStudio() {
             onChange={(e) => setSelectedGrantId(e.target.value)}
           >
             <option value="">-- Select a Grant --</option>
-            {grants.map(g => (
-              <option key={g.id} value={g.id}>{g.name} {evaluations[g.id]?.decision === 'Go' ? '(GO)' : ''}</option>
-            ))}
+            {grantOptions}
           </select>
           <button
             onClick={handleDraft}
@@ -201,7 +233,7 @@ export default function ProposalStudio() {
           </div>
           <div className="p-8 overflow-auto flex-1 prose prose-indigo max-w-none">
             {proposal ? (
-              <Markdown>{proposal}</Markdown>
+              <MemoizedMarkdown>{proposal}</MemoizedMarkdown>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
                 Generate a draft or ask the assistant to write one.
@@ -232,7 +264,7 @@ export default function ProposalStudio() {
                       : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
                   }`}>
                     <div className={msg.role === 'user' ? 'prose-invert' : 'prose-sm'}>
-                      <Markdown>{msg.content}</Markdown>
+                      <MemoizedMarkdown>{msg.content}</MemoizedMarkdown>
                     </div>
                   </div>
                 </div>
