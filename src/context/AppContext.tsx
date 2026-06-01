@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 import { Grant, Evaluation, AdminData, UserProfile, Project } from '../types';
 
 export interface ChatMessage {
@@ -39,54 +39,59 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [adminPlans, setAdminPlans] = useState<Record<string, AdminData>>({});
   const [proposalChats, setProposalChats] = useState<Record<string, ChatMessage[]>>({});
 
-  const updateUserProfile = (profile: UserProfile) => {
+  const updateUserProfile = useCallback((profile: UserProfile) => {
     setUserProfile(profile);
-  };
+  }, []);
 
-  const addProject = (project: Project) => {
+  const addProject = useCallback((project: Project) => {
     setProjects(prev => [...prev, project]);
-    if (!activeProjectId) setActiveProjectId(project.id);
-  };
+    setActiveProjectId(prevId => prevId || project.id);
+  }, []);
 
-  const updateProject = (project: Project) => {
+  const updateProject = useCallback((project: Project) => {
     setProjects(prev => prev.map(p => p.id === project.id ? project : p));
-  };
+  }, []);
 
-  const addGrants = (newGrants: Grant[]) => {
+  const addGrants = useCallback((newGrants: Grant[]) => {
     setGrants(prev => {
       const existingIds = new Set(prev.map(g => g.id));
       const uniqueNew = newGrants.filter(g => !existingIds.has(g.id));
       return [...prev, ...uniqueNew];
     });
-  };
+  }, []);
 
-  const updateGrantStatus = (id: string, status: Grant['status']) => {
+  const updateGrantStatus = useCallback((id: string, status: Grant['status']) => {
     setGrants(prev => prev.map(g => g.id === id ? { ...g, status } : g));
-  };
+  }, []);
 
-  const addEvaluation = (evalData: Evaluation) => {
+  const addEvaluation = useCallback((evalData: Evaluation) => {
     setEvaluations(prev => ({ ...prev, [evalData.grantId]: evalData }));
     updateGrantStatus(evalData.grantId, 'evaluating');
-  };
+  }, [updateGrantStatus]);
 
-  const addProposal = (grantId: string, proposal: string) => {
+  const addProposal = useCallback((grantId: string, proposal: string) => {
     setProposals(prev => ({ ...prev, [grantId]: proposal }));
     updateGrantStatus(grantId, 'writing');
-  };
+  }, [updateGrantStatus]);
 
-  const addAdminPlan = (adminData: AdminData) => {
+  const addAdminPlan = useCallback((adminData: AdminData) => {
     setAdminPlans(prev => ({ ...prev, [adminData.grantId]: adminData }));
-  };
+  }, []);
 
-  const updateProposalChat = (grantId: string, messages: ChatMessage[]) => {
+  const updateProposalChat = useCallback((grantId: string, messages: ChatMessage[]) => {
     setProposalChats(prev => ({ ...prev, [grantId]: messages }));
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    userProfile, projects, activeProjectId, grants, evaluations, proposals, adminPlans, proposalChats,
+    updateUserProfile, addProject, updateProject, setActiveProjectId, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan, updateProposalChat
+  }), [
+    userProfile, projects, activeProjectId, grants, evaluations, proposals, adminPlans, proposalChats,
+    updateUserProfile, addProject, updateProject, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan, updateProposalChat
+  ]);
 
   return (
-    <AppContext.Provider value={{ 
-      userProfile, projects, activeProjectId, grants, evaluations, proposals, adminPlans, proposalChats,
-      updateUserProfile, addProject, updateProject, setActiveProjectId, addGrants, updateGrantStatus, addEvaluation, addProposal, addAdminPlan, updateProposalChat 
-    }}>
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );
