@@ -1,9 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { draftProposal, createProposalChat } from '../services/agentService';
 import { PenTool, Loader2, Send, MessageSquare, ToggleLeft, ToggleRight, Plus, X, Save } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { Project } from '../types';
+
+// Performance: Wrap Markdown in React.memo to prevent expensive re-parsing
+// of large proposal text during chat input state updates.
+const MemoizedMarkdown = memo(Markdown);
 
 export default function ProposalStudio() {
   const { grants, evaluations, proposals, addProposal, projects, activeProjectId, userProfile, updateProject, addProject, setActiveProjectId, proposalChats, updateProposalChat } = useAppContext();
@@ -18,10 +22,27 @@ export default function ProposalStudio() {
   const chatInstanceRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const selectedGrant = grants.find(g => g.id === selectedGrantId);
-  const evaluation = selectedGrantId ? evaluations[selectedGrantId] : null;
-  const proposal = selectedGrantId ? proposals[selectedGrantId] : null;
-  const activeProject = projects.find(p => p.id === activeProjectId) || null;
+  // Performance: Memoize expensive lookups to prevent O(n) searches on every render,
+  // especially important during frequent state updates like typing in the chat.
+  const selectedGrant = useMemo(() =>
+    grants.find(g => g.id === selectedGrantId) || null,
+    [grants, selectedGrantId]
+  );
+
+  const evaluation = useMemo(() =>
+    selectedGrantId ? evaluations[selectedGrantId] : null,
+    [evaluations, selectedGrantId]
+  );
+
+  const proposal = useMemo(() =>
+    selectedGrantId ? proposals[selectedGrantId] : null,
+    [proposals, selectedGrantId]
+  );
+
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -201,7 +222,7 @@ export default function ProposalStudio() {
           </div>
           <div className="p-8 overflow-auto flex-1 prose prose-indigo max-w-none">
             {proposal ? (
-              <Markdown>{proposal}</Markdown>
+              <MemoizedMarkdown>{proposal}</MemoizedMarkdown>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
                 Generate a draft or ask the assistant to write one.
@@ -232,7 +253,7 @@ export default function ProposalStudio() {
                       : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
                   }`}>
                     <div className={msg.role === 'user' ? 'prose-invert' : 'prose-sm'}>
-                      <Markdown>{msg.content}</Markdown>
+                      <MemoizedMarkdown>{msg.content}</MemoizedMarkdown>
                     </div>
                   </div>
                 </div>
