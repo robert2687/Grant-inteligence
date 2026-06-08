@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Project } from '../types';
 import { FolderGit2, Plus, Save, CheckCircle2 } from 'lucide-react';
@@ -8,7 +8,11 @@ export default function ProjectManager() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  const activeProject = projects.find(p => p.id === activeProjectId) || null;
+  // Performance: Memoize active project lookup to avoid redundant O(n) searches on every render (e.g. during form edits)
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
 
   const [formData, setFormData] = useState<Project>(activeProject || {
     id: crypto.randomUUID(),
