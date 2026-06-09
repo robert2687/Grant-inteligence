@@ -5,3 +5,7 @@
 ## 2025-05-14 - [Lockfile Discipline]
 **Learning:** Introducing alternative package manager artifacts (like `bun.lock`) into a project that primarily uses another (e.g., `npm` or `pnpm`) is a significant anti-pattern that creates noise and potential CI/CD breakages. Even if using alternative runtimes for local verification due to environmental issues, ensure no secondary lockfiles are committed.
 **Action:** Explicitly check for and remove any `bun.lock` or `yarn.lock` files before submitting if the project is npm/pnpm based.
+
+## 2026-06-09 - [Lazy State Initialization & UUIDs]
+**Learning:** Initializing 'useState' with object literals or functions that generate values (like 'crypto.randomUUID()') directly in the argument causes redundant allocations and computations on every render. While React only uses the initial value once, the expression is evaluated every time the component functions.
+**Action:** Always use a lazy initializer function 'useState(() => ...)' for initial state that involves object creation or expensive calls like UUID generation to improve render-loop efficiency.
