@@ -8,7 +8,6 @@ export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) =
   const { grants, evaluations, proposals } = useAppContext();
   const { t } = useLanguage();
 
-  // Memoize stats to avoid O(N) filtering and object creation on every render
   const stats = useMemo(() => [
     { label: t('discoveredGrants'), value: grants.length, icon: Activity, color: 'text-blue-600', bg: 'bg-blue-100' },
     { label: t('evaluated'), value: Object.keys(evaluations).length, icon: Target, color: 'text-purple-600', bg: 'bg-purple-100' },
@@ -16,7 +15,6 @@ export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) =
     { label: t('submitted'), value: grants.filter(g => g.status === 'submitted').length, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
   ], [grants, evaluations, proposals, t]);
 
-  // Memoize the recent opportunities slice to avoid redundant array operations
   const recentGrants = useMemo(() => grants.slice(0, 5), [grants]);
 
   return (
