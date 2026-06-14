@@ -8,10 +8,27 @@ export default function UserProfile() {
   const [isSaved, setIsSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<UserProfileType>(userProfile || {
-    firstName: '', lastName: '', dob: '', gender: '', country: '', city: '', photoUrl: '', bio: '',
-    profession: '', industry: '', yearsOfExperience: '', skills: '', certifications: '', website: '',
-    preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: ''
+  // Performance: Use lazy initializer for formData to prevent redundant object creation on every render.
+  const [formData, setFormData] = useState<UserProfileType>(() => userProfile || {
+    firstName: '',
+    lastName: '',
+    dob: '',
+    gender: '',
+    country: '',
+    city: '',
+    photoUrl: '',
+    bio: '',
+    profession: '',
+    industry: '',
+    yearsOfExperience: '',
+    skills: '',
+    certifications: '',
+    website: '',
+    preferredGrantTypes: '',
+    preferredRegions: '',
+    fundingSizeRange: '',
+    projectThemes: '',
+    preferredDeadlines: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
