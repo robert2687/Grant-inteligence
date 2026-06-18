@@ -8,7 +8,8 @@ export default function UserProfile() {
   const [isSaved, setIsSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<UserProfileType>(userProfile || {
+  // Performance: Use lazy initialization to avoid redundant object creation on every render
+  const [formData, setFormData] = useState<UserProfileType>(() => userProfile || {
     firstName: '', lastName: '', dob: '', gender: '', country: '', city: '', photoUrl: '', bio: '',
     profession: '', industry: '', yearsOfExperience: '', skills: '', certifications: '', website: '',
     preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: ''
