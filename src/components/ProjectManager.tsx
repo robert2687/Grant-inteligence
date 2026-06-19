@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Project } from '../types';
 import { FolderGit2, Plus, Save, CheckCircle2 } from 'lucide-react';
@@ -8,9 +8,14 @@ export default function ProjectManager() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  const activeProject = projects.find(p => p.id === activeProjectId) || null;
+  // Memoize active project lookup to avoid re-calculating on every render
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
 
-  const [formData, setFormData] = useState<Project>(activeProject || {
+  // Performance: Use lazy initialization to avoid redundant object creation and randomUUID calls on every render
+  const [formData, setFormData] = useState<Project>(() => activeProject || {
     id: crypto.randomUUID(),
     name: '', summary: '', objectives: '', targetImpact: '', technologyArea: '', teamMembers: '', trlLevel: '', additionalNotes: ''
   });
@@ -24,13 +29,11 @@ export default function ProjectManager() {
     setIsEditing(true);
   };
 
-  const handleSelectProject = (id: string) => {
-    setActiveProjectId(id);
-    const proj = projects.find(p => p.id === id);
-    if (proj) {
-      setFormData(proj);
-      setIsEditing(false);
-    }
+  // Refactor: Pass the project object directly to avoid an extra O(N) search
+  const handleSelectProject = (project: Project) => {
+    setActiveProjectId(project.id);
+    setFormData(project);
+    setIsEditing(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -78,7 +81,7 @@ export default function ProjectManager() {
               {projects.map(proj => (
                 <button
                   key={proj.id}
-                  onClick={() => handleSelectProject(proj.id)}
+                  onClick={() => handleSelectProject(proj)}
                   className={`w-full text-left p-4 rounded-xl border transition-colors flex items-center space-x-3 ${
                     activeProjectId === proj.id
                       ? 'bg-indigo-50 border-indigo-200 text-indigo-900'
