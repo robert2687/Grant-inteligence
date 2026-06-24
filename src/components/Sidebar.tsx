@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { LayoutDashboard, Search, FileCheck, PenTool, ShieldCheck, UserCircle, FolderGit2, ChevronLeft, ChevronRight, Languages } from 'lucide-react';
 import { Tab } from '../App';
 import { useLanguage, Locale } from '../context/LanguageContext';
@@ -12,15 +12,15 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
   const { t, locale, setLocale } = useLanguage();
 
-  const navItems = [
-    { id: 'dashboard', label: t('orchestrator'), icon: LayoutDashboard },
-    { id: 'profile', label: t('userProfile'), icon: UserCircle },
-    { id: 'projects', label: t('myProjects'), icon: FolderGit2 },
-    { id: 'scanner', label: t('grantScanner'), icon: Search },
-    { id: 'evaluator', label: t('evaluator'), icon: FileCheck },
-    { id: 'studio', label: t('proposalStudio'), icon: PenTool },
-    { id: 'admin', label: t('adminCompliance'), icon: ShieldCheck },
-  ] as const;
+  const navItems = useMemo(() => [
+    { id: 'dashboard' as const, label: t('orchestrator'), icon: LayoutDashboard },
+    { id: 'profile' as const, label: t('userProfile'), icon: UserCircle },
+    { id: 'projects' as const, label: t('myProjects'), icon: FolderGit2 },
+    { id: 'scanner' as const, label: t('grantScanner'), icon: Search },
+    { id: 'evaluator' as const, label: t('evaluator'), icon: FileCheck },
+    { id: 'studio' as const, label: t('proposalStudio'), icon: PenTool },
+    { id: 'admin' as const, label: t('adminCompliance'), icon: ShieldCheck },
+  ], [t]);
 
   return (
     <div className={`${isOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out`}>
