@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { LayoutDashboard, Search, FileCheck, PenTool, ShieldCheck, UserCircle, FolderGit2, ChevronLeft, ChevronRight, Languages } from 'lucide-react';
 import { Tab } from '../App';
 import { useLanguage, Locale } from '../context/LanguageContext';
@@ -12,7 +12,8 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
   const { t, locale, setLocale } = useLanguage();
 
-  const navItems = [
+  // Performance: Memoize nav items to prevent redundant object allocation and re-translation on every render (e.g. toggling sidebar)
+  const navItems = useMemo(() => [
     { id: 'dashboard', label: t('orchestrator'), icon: LayoutDashboard },
     { id: 'profile', label: t('userProfile'), icon: UserCircle },
     { id: 'projects', label: t('myProjects'), icon: FolderGit2 },
@@ -20,7 +21,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: 'evaluator', label: t('evaluator'), icon: FileCheck },
     { id: 'studio', label: t('proposalStudio'), icon: PenTool },
     { id: 'admin', label: t('adminCompliance'), icon: ShieldCheck },
-  ] as const;
+  ] as const, [t]);
 
   return (
     <div className={`${isOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out`}>
