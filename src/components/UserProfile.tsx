@@ -8,14 +8,22 @@ export default function UserProfile() {
   const [isSaved, setIsSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<UserProfileType>(userProfile || {
-    firstName: '', lastName: '', dob: '', gender: '', country: '', city: '', photoUrl: '', bio: '',
-    profession: '', industry: '', yearsOfExperience: '', skills: '', certifications: '', website: '',
-    preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: ''
+  // Performance: Split photoUrl into its own state to prevent expensive spreading of large base64 strings on every keystroke.
+  // Impact: Improves typing responsiveness significantly when a profile photo is present.
+  const [photoUrl, setPhotoUrl] = useState(() => userProfile?.photoUrl || '');
+
+  // Performance: Use lazy initialization to avoid redundant object creation on every render.
+  const [formData, setFormData] = useState<Omit<UserProfileType, 'photoUrl'>>(() => {
+    const { photoUrl: _, ...rest } = userProfile || {
+      firstName: '', lastName: '', dob: '', gender: '', country: '', city: '', photoUrl: '', bio: '',
+      profession: '', industry: '', yearsOfExperience: '', skills: '', certifications: '', website: '',
+      preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: ''
+    };
+    return rest;
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setIsSaved(false);
   };
 
@@ -24,7 +32,7 @@ export default function UserProfile() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, photoUrl: reader.result as string });
+        setPhotoUrl(reader.result as string);
         setIsSaved(false);
       };
       reader.readAsDataURL(file);
@@ -32,7 +40,8 @@ export default function UserProfile() {
   };
 
   const handleSave = () => {
-    updateUserProfile(formData);
+    // Re-combine photoUrl with formData for the context update.
+    updateUserProfile({ ...formData, photoUrl } as UserProfileType);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -62,8 +71,8 @@ export default function UserProfile() {
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2 flex items-center space-x-6">
             <div className="w-24 h-24 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-              {formData.photoUrl ? (
-                <img src={formData.photoUrl} alt="Profile" className="w-full h-full object-cover" />
+              {photoUrl ? (
+                <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-10 h-10 text-gray-400" />
               )}
