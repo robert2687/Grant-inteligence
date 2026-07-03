@@ -8,10 +8,19 @@ export default function UserProfile() {
   const [isSaved, setIsSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<UserProfileType>(userProfile || {
-    firstName: '', lastName: '', dob: '', gender: '', country: '', city: '', photoUrl: '', bio: '',
-    profession: '', industry: '', yearsOfExperience: '', skills: '', certifications: '', website: '',
-    preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: ''
+  // Performance: Decouple photoUrl from formData to avoid spreading large base64 strings on every keystroke.
+  // Impact: Significant reduction in CPU usage during form typing, especially with high-res profile photos.
+  const [photoUrl, setPhotoUrl] = useState(userProfile?.photoUrl || '');
+
+  const [formData, setFormData] = useState<UserProfileType>(() => {
+    const { photoUrl: _, ...rest } = userProfile || {} as UserProfileType;
+    return {
+      firstName: '', lastName: '', dob: '', gender: '', country: '', city: '', bio: '',
+      profession: '', industry: '', yearsOfExperience: '', skills: '', certifications: '', website: '',
+      preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: '',
+      ...rest,
+      photoUrl: '' // We keep the key but the value is handled by standalone state
+    };
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -24,7 +33,7 @@ export default function UserProfile() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, photoUrl: reader.result as string });
+        setPhotoUrl(reader.result as string);
         setIsSaved(false);
       };
       reader.readAsDataURL(file);
@@ -32,7 +41,8 @@ export default function UserProfile() {
   };
 
   const handleSave = () => {
-    updateUserProfile(formData);
+    // Recombine formData with the standalone photoUrl state before saving to context
+    updateUserProfile({ ...formData, photoUrl });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -62,8 +72,8 @@ export default function UserProfile() {
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2 flex items-center space-x-6">
             <div className="w-24 h-24 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-              {formData.photoUrl ? (
-                <img src={formData.photoUrl} alt="Profile" className="w-full h-full object-cover" />
+              {photoUrl ? (
+                <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-10 h-10 text-gray-400" />
               )}
