@@ -17,7 +17,7 @@ export default function UserProfile() {
       preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: ''
     };
     if (!userProfile) return defaultData;
-    const { photoUrl: _photoUrl, ...rest } = userProfile;
+    const rest = (({ photoUrl: _, ...rest }) => rest)(userProfile);
     return rest;
   });
 
