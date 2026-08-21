@@ -8,11 +8,20 @@ export default function UserProfile() {
   const [isSaved, setIsSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<UserProfileType>(userProfile || {
-    firstName: '', lastName: '', dob: '', gender: '', country: '', city: '', photoUrl: '', bio: '',
-    profession: '', industry: '', yearsOfExperience: '', skills: '', certifications: '', website: '',
-    preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: ''
+  // Performance: Decouple photoUrl (large string) from main formData state.
+  // This prevents expensive object spreading of a multi-megabyte string on every keystroke in other fields.
+  const [formData, setFormData] = useState<Omit<UserProfileType, 'photoUrl'>>(() => {
+    const defaultData = {
+      firstName: '', lastName: '', dob: '', gender: '', country: '', city: '', bio: '',
+      profession: '', industry: '', yearsOfExperience: '', skills: '', certifications: '', website: '',
+      preferredGrantTypes: '', preferredRegions: '', fundingSizeRange: '', projectThemes: '', preferredDeadlines: ''
+    };
+    if (!userProfile) return defaultData;
+    const rest = (({ photoUrl: _, ...rest }) => rest)(userProfile);
+    return rest;
   });
+
+  const [photoUrl, setPhotoUrl] = useState<string>(userProfile?.photoUrl || '');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -24,7 +33,7 @@ export default function UserProfile() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, photoUrl: reader.result as string });
+        setPhotoUrl(reader.result as string);
         setIsSaved(false);
       };
       reader.readAsDataURL(file);
@@ -32,7 +41,8 @@ export default function UserProfile() {
   };
 
   const handleSave = () => {
-    updateUserProfile(formData);
+    // Impact: Re-merge states only during save to ensure data consistency with global context.
+    updateUserProfile({ ...formData, photoUrl });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -62,8 +72,8 @@ export default function UserProfile() {
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2 flex items-center space-x-6">
             <div className="w-24 h-24 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-              {formData.photoUrl ? (
-                <img src={formData.photoUrl} alt="Profile" className="w-full h-full object-cover" />
+              {photoUrl ? (
+                <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-10 h-10 text-gray-400" />
               )}
