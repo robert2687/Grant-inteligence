@@ -42,7 +42,7 @@ export default function UserProfile() {
 
   const handleSave = () => {
     // Impact: Re-merge states only during save to ensure data consistency with global context.
-    updateUserProfile({ ...formData, photoUrl } as UserProfileType);
+    updateUserProfile({ ...formData, photoUrl });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
