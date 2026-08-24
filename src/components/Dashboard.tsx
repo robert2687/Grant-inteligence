@@ -8,12 +8,28 @@ export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) =
   const { grants, evaluations, proposals } = useAppContext();
   const { t } = useLanguage();
 
+  // Performance: Single-pass calculation for submitted count to avoid allocating intermediate filtered arrays.
+  // Impact: Reduces garbage collection pressure and CPU cycles during frequent re-renders or large grant lists.
+  const submittedCount = useMemo(() => {
+    let count = 0;
+    for (let i = 0; i < grants.length; i++) {
+      if (grants[i].status === 'submitted') {
+        count++;
+      }
+    }
+    return count;
+  }, [grants]);
+
   const stats = useMemo(() => [
     { label: t('discoveredGrants'), value: grants.length, icon: Activity, color: 'text-blue-600', bg: 'bg-blue-100' },
     { label: t('evaluated'), value: Object.keys(evaluations).length, icon: Target, color: 'text-purple-600', bg: 'bg-purple-100' },
     { label: t('proposalsDrafted'), value: Object.keys(proposals).length, icon: FileText, color: 'text-amber-600', bg: 'bg-amber-100' },
-    { label: t('submitted'), value: grants.filter(g => g.status === 'submitted').length, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-  ], [grants, evaluations, proposals, t]);
+    { label: t('submitted'), value: submittedCount, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+  ], [grants.length, evaluations, proposals, submittedCount, t]);
+
+  // Performance: Memoize sliced recent grants list to prevent redundant array allocations and slicing on every render.
+  // Impact: Avoids allocating a new 5-element array on unrelated renders.
+  const recentGrants = useMemo(() => grants.slice(0, 5), [grants]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -47,12 +63,12 @@ export default function Dashboard({ setActiveTab }: { setActiveTab: (tab: Tab) =
           </button>
         </div>
         <div className="divide-y divide-gray-200">
-          {grants.length === 0 ? (
+          {recentGrants.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               No grants discovered yet. Go to the Grant Scanner to start.
             </div>
           ) : (
-            grants.slice(0, 5).map(grant => (
+            recentGrants.map(grant => (
               <div key={grant.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div>
                   <h4 className="font-medium text-gray-900">{grant.name}</h4>
