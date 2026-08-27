@@ -141,7 +141,9 @@ export default function GrantEvaluator() {
   );
 }
 
-function ScoreBar({ label, score }: { label: string, score: number }) {
+// Performance: Memoize ScoreBar component to prevent re-renders when parent state changes (e.g. isEvaluating or selectedGrantId)
+// Impact: Prevents unnecessary Virtual DOM diffing for 4 score bar elements on every parent re-render.
+const ScoreBar = React.memo(function ScoreBar({ label, score }: { label: string, score: number }) {
   return (
     <div>
       <div className="flex justify-between text-xs font-medium mb-1">
@@ -153,13 +155,15 @@ function ScoreBar({ label, score }: { label: string, score: number }) {
       </div>
     </div>
   );
-}
+});
 
-function DetailRow({ label, value }: { label: string, value: string }) {
+// Performance: Memoize DetailRow component to prevent re-renders when parent state changes.
+// Impact: Prevents unnecessary Virtual DOM diffing for 5 detail row elements on every parent re-render.
+const DetailRow = React.memo(function DetailRow({ label, value }: { label: string, value: string }) {
   return (
     <div className="flex justify-between items-center text-sm">
       <span className="text-gray-500">{label}</span>
       <span className="font-medium text-gray-900 text-right max-w-[60%]">{value}</span>
     </div>
   );
-}
+});
