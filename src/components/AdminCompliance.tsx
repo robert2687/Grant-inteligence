@@ -85,7 +85,8 @@ export default function AdminCompliance() {
     alert(`Simulating upload for: ${docName}`);
   };
 
-  // Performance: Consolidate multiple derived states into a single pass useMemo
+  // Performance: Single-pass iteration to calculate task metrics, filter documents, and score readiness.
+  // Eliminates temporary array allocations from multiple .filter() calls and reduces garbage collection pressure.
   const { progress, readinessScore, taskSummary, filteredDocuments, completedDocumentsCount } = useMemo(() => {
     if (!adminPlan) {
       return {
@@ -97,7 +98,7 @@ export default function AdminCompliance() {
       };
     }
 
-    // 1. Task Summary and part of Progress
+    // 1. Task Summary
     const summary = { completed: 0, inProgress: 0, missing: 0, overdue: 0 };
     adminPlan.tasks.forEach(task => {
       if (task.status === 'completed') summary.completed++;
@@ -106,26 +107,40 @@ export default function AdminCompliance() {
       else if (task.status === 'overdue') summary.overdue++;
     });
 
-    // 2. Filtered Documents and part of Progress
-    const filteredDocs = adminPlan.documents.filter(d => {
+    // 2. Single-pass Document Filtering & Counter Tracking (Impact: Avoids 3 separate array traversals)
+    let totalCompletedDocs = 0;
+    let filteredCompletedDocs = 0;
+    const filteredDocs: typeof adminPlan.documents = [];
+
+    adminPlan.documents.forEach(d => {
+      const isCompleted = d.status === 'completed';
+      if (isCompleted) totalCompletedDocs++;
+
       const lowerName = d.name.toLowerCase();
-      if (regionMode === 'EU') {
-        return !lowerName.includes('irs') && !lowerName.includes('w9');
-      } else {
-        return !lowerName.includes('gdpr') && !lowerName.includes('pic');
+      const isExcluded = regionMode === 'EU'
+        ? (lowerName.includes('irs') || lowerName.includes('w9'))
+        : (lowerName.includes('gdpr') || lowerName.includes('pic'));
+
+      if (!isExcluded) {
+        filteredDocs.push(d);
+        if (isCompleted) filteredCompletedDocs++;
       }
     });
 
-    const completedDocsCount = filteredDocs.reduce((count, d) => count + (d.status === 'completed' ? 1 : 0), 0);
-
     // 3. Overall Progress
     const totalItems = adminPlan.tasks.length + adminPlan.documents.length;
-    const totalCompleted = summary.completed + adminPlan.documents.filter(d => d.status === 'completed').length;
+    const totalCompleted = summary.completed + totalCompletedDocs;
     const prog = totalItems === 0 ? 0 : Math.round((totalCompleted / totalItems) * 100);
 
-    // 4. Readiness Score
-    const readinessTotal = adminPlan.submissionReadiness?.length || 0;
-    const readinessCompleted = adminPlan.submissionReadiness?.filter(i => i.status === 'completed').length || 0;
+    // 4. Readiness Score (Impact: Avoids intermediate array allocation from .filter().length)
+    const readinessItems = adminPlan.submissionReadiness;
+    const readinessTotal = readinessItems?.length || 0;
+    let readinessCompleted = 0;
+    if (readinessItems) {
+      for (let i = 0; i < readinessItems.length; i++) {
+        if (readinessItems[i].status === 'completed') readinessCompleted++;
+      }
+    }
     const readiness = readinessTotal === 0 ? 0 : Math.round((readinessCompleted / readinessTotal) * 100);
 
     return {
@@ -133,7 +148,7 @@ export default function AdminCompliance() {
       readinessScore: readiness,
       taskSummary: summary,
       filteredDocuments: filteredDocs,
-      completedDocumentsCount: completedDocsCount
+      completedDocumentsCount: filteredCompletedDocs
     };
   }, [adminPlan, regionMode]);
 
