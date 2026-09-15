@@ -141,7 +141,8 @@ export default function GrantEvaluator() {
   );
 }
 
-function ScoreBar({ label, score }: { label: string, score: number }) {
+// Performance: Wrap ScoreBar in React.memo to prevent unnecessary VDOM diffing when parent re-renders (e.g., during evaluation state updates)
+const ScoreBar = React.memo(function ScoreBar({ label, score }: { label: string, score: number }) {
   return (
     <div>
       <div className="flex justify-between text-xs font-medium mb-1">
@@ -153,13 +154,14 @@ function ScoreBar({ label, score }: { label: string, score: number }) {
       </div>
     </div>
   );
-}
+});
 
-function DetailRow({ label, value }: { label: string, value: string }) {
+// Performance: Wrap DetailRow in React.memo to avoid redundant re-renders when parent state updates
+const DetailRow = React.memo(function DetailRow({ label, value }: { label: string, value: string }) {
   return (
     <div className="flex justify-between items-center text-sm">
       <span className="text-gray-500">{label}</span>
       <span className="font-medium text-gray-900 text-right max-w-[60%]">{value}</span>
     </div>
   );
-}
+});
