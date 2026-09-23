@@ -3,10 +3,66 @@ import { useAppContext } from '../context/AppContext';
 import { scanForGrants } from '../services/agentService';
 import { Search, Loader2, ExternalLink, Filter } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { Grant } from '../types';
+
+// Performance: Memoize individual GrantCard to prevent redundant re-renders when parent filter states change.
+// Impact: Consumes `useLanguage` directly to avoid passing function references via props, allowing React.memo to do pure prop checking on `grant`.
+const GrantCard = React.memo(({ grant }: { grant: Grant }) => {
+  const { t, locale } = useLanguage();
+
+  // Memoize formatted deadline string to prevent redundant Date object creation on every render
+  const formattedDeadline = useMemo(() => {
+    return new Date(grant.deadline).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
+  }, [grant.deadline, locale]);
+
+  return (
+    <div className="bg-white p-5 md:p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+        <div>
+          <div className="flex items-center flex-wrap gap-2 md:gap-3">
+            <h3 className="text-lg md:text-xl font-bold text-gray-900">{grant.name}</h3>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+              {grant.fitScore}% {t('fit')}
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            {grant.region} • Deadline: {formattedDeadline}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-bold text-emerald-600">
+            {grant.amount}
+          </p>
+          <a href={grant.sourceLink} target="_blank" rel="noreferrer" className="inline-flex items-center text-sm text-blue-600 hover:underline mt-1">
+            {t('source')} <ExternalLink className="w-3 h-3 ml-1" />
+          </a>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <h4 className="text-sm font-semibold text-gray-900">{t('relevance')}</h4>
+        <p className="text-sm text-gray-600 mt-1">{grant.relevance}</p>
+      </div>
+
+      <div className="mt-4">
+        <h4 className="text-sm font-semibold text-gray-900">{t('eligibility')}</h4>
+        <p className="text-sm text-gray-600 mt-1">{grant.eligibility}</p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {grant.themes.map((theme, i) => (
+          <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+            {theme}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+});
 
 export default function GrantScanner() {
   const { grants, addGrants, userProfile, projects, activeProjectId } = useAppContext();
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -132,47 +188,7 @@ export default function GrantScanner() {
         )}
 
         {filteredGrants.map(grant => (
-          <div key={grant.id} className="bg-white p-5 md:p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-              <div>
-                <div className="flex items-center flex-wrap gap-2 md:gap-3">
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900">{grant.name}</h3>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                    {grant.fitScore}% {t('fit')}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {grant.region} • Deadline: {new Date(grant.deadline).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-emerald-600">
-                  {grant.amount}
-                </p>
-                <a href={grant.sourceLink} target="_blank" rel="noreferrer" className="inline-flex items-center text-sm text-blue-600 hover:underline mt-1">
-                  {t('source')} <ExternalLink className="w-3 h-3 ml-1" />
-                </a>
-              </div>
-            </div>
-            
-            <div className="mt-4">
-              <h4 className="text-sm font-semibold text-gray-900">{t('relevance')}</h4>
-              <p className="text-sm text-gray-600 mt-1">{grant.relevance}</p>
-            </div>
-
-            <div className="mt-4">
-              <h4 className="text-sm font-semibold text-gray-900">{t('eligibility')}</h4>
-              <p className="text-sm text-gray-600 mt-1">{grant.eligibility}</p>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {grant.themes.map((theme, i) => (
-                <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
-                  {theme}
-                </span>
-              ))}
-            </div>
-          </div>
+          <GrantCard key={grant.id} grant={grant} />
         ))}
         
         {grants.length > 0 && filteredGrants.length === 0 && (
