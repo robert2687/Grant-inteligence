@@ -12,7 +12,9 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
   const { t, locale, setLocale } = useLanguage();
 
-  const navItems = [
+  // Performance: Memoize navigation items to prevent recreation on every render.
+  // Impact: Reduces overhead of creating an array of objects during tab switches or sidebar toggles.
+  const navItems = React.useMemo(() => [
     { id: 'dashboard', label: t('orchestrator'), icon: LayoutDashboard },
     { id: 'profile', label: t('userProfile'), icon: UserCircle },
     { id: 'projects', label: t('myProjects'), icon: FolderGit2 },
@@ -20,7 +22,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: 'evaluator', label: t('evaluator'), icon: FileCheck },
     { id: 'studio', label: t('proposalStudio'), icon: PenTool },
     { id: 'admin', label: t('adminCompliance'), icon: ShieldCheck },
-  ] as const;
+  ] as const, [t]);
 
   return (
     <div className={`${isOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out`}>
