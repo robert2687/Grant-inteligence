@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LayoutDashboard, Search, FileCheck, PenTool, ShieldCheck, UserCircle, FolderGit2 } from 'lucide-react';
 import { Tab } from '../App';
 import { useLanguage } from '../context/LanguageContext';
@@ -11,7 +11,8 @@ interface MobileNavProps {
 export default function MobileNav({ activeTab, setActiveTab }: MobileNavProps) {
   const { t } = useLanguage();
 
-  const navItems = [
+  // Performance: Memoize navigation items to prevent redundant array and object allocation on every render
+  const navItems = useMemo(() => [
     { id: 'dashboard', label: t('orchestrator'), icon: LayoutDashboard },
     { id: 'profile', label: t('userProfile'), icon: UserCircle },
     { id: 'projects', label: t('myProjects'), icon: FolderGit2 },
@@ -19,7 +20,7 @@ export default function MobileNav({ activeTab, setActiveTab }: MobileNavProps) {
     { id: 'evaluator', label: t('evaluator'), icon: FileCheck },
     { id: 'studio', label: t('proposalStudio'), icon: PenTool },
     { id: 'admin', label: t('adminCompliance'), icon: ShieldCheck },
-  ] as const;
+  ] as const, [t]);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center h-20 px-2 z-50 md:hidden overflow-x-auto">
