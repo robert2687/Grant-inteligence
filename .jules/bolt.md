@@ -5,3 +5,7 @@
 ## 2025-05-14 - [Lockfile Discipline]
 **Learning:** Introducing alternative package manager artifacts (like `bun.lock`) into a project that primarily uses another (e.g., `npm` or `pnpm`) is a significant anti-pattern that creates noise and potential CI/CD breakages. Even if using alternative runtimes for local verification due to environmental issues, ensure no secondary lockfiles are committed.
 **Action:** Explicitly check for and remove any `bun.lock` or `yarn.lock` files before submitting if the project is npm/pnpm based.
+
+## 2025-05-14 - [Stable Translation Hooks for Memoization]
+**Learning:** The `t` function from `LanguageContext` is correctly stabilized with `useCallback`. This makes it a safe dependency for `useMemo` when defining configuration arrays (like navigation items) that include translated labels. Without this stabilization, memoizing such arrays would be ineffective as they would still recreate on every render due to the function reference changing.
+**Action:** When creating UI configuration arrays or objects that use the `t` function, always wrap them in `useMemo` with `[t]` as a dependency to maintain referential stability.
